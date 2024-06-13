@@ -170,7 +170,7 @@ https://tiebac.baidu.com/c/p/voice?voice_md5=$voice_md5&play_from=pb_voice_play
 
 ### 小尾巴 sign
 
-发布后，修改小尾巴，不会改变
+已经发布的小尾巴不会随着用户修改小尾巴而改变。
 
 ### Create_Time
 
