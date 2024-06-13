@@ -89,8 +89,12 @@ class UserService:
         )
 
     async def save_user_info(self, user_entity: UserEntity):
-
-        user_info = await get_user_info(user_entity.id)
+        # 有可能会请求失败, 重试2次，如果依然失败，判定为用户已经注销。
+        user_info = None
+        retry = 3
+        while user_info is None and retry:
+            user_info = await get_user_info(user_entity.id)
+            retry -= 1
 
         # 已经注销的用户
         if user_info:

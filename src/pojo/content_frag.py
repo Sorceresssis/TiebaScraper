@@ -44,7 +44,7 @@ class FragEmoji(ContentFrag):
 class FragImage(ContentFrag):
     filename: str
     tb_origin_src: str  # tieba 的原图链接
-    origin_size: int  # 通常是0不知到有什么样
+    origin_size: int  # 通常是0
     show_width: int
     show_height: int
     hash: str

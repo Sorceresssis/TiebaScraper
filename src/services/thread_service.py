@@ -75,6 +75,7 @@ class ThreadService:
                 f"第{posts_pn}页爬取完成, 共{posts.page.total_page}页, 每页{posts_rn}个帖子"
             )
 
+            # 部分帖子会出现某一页请求超出范围的问题，但实际上后面还有楼层，因此第一次请求的total_page是才是准确的。后续的 has_more 和 total_page 可能是错误的。
             posts_total_page = (
                 posts.page.total_page
                 if posts.page.total_page > posts_total_page
