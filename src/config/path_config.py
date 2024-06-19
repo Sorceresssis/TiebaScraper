@@ -30,7 +30,7 @@ class ScrapedPathConstructor:
         return path.join(self.scraped_data_dir, "scrape.log")
 
     def get_scraper_info_path(self):
-        return path.join(self.scraped_data_dir, "scraper_info.json")
+        return path.join(self.scraped_data_dir, "scrape_info.json")
 
     def get_thread_dir(self, tid: int):
         return path.join(self.scraped_data_dir, "threads", f"{tid}")
@@ -39,13 +39,13 @@ class ScrapedPathConstructor:
         return path.join(self.scraped_data_dir, "threads", f"{tid}", "content.db")
 
     def get_forum_info_path(self, tid: int):
-        return path.join(self.scraped_data_dir, "threads", f"{tid}", "forum_info.json")
+        return path.join(self.scraped_data_dir, "threads", f"{tid}", "forum.json")
 
     def get_forum_avatar_dir(self, tid: int):
         return path.join(self.scraped_data_dir, "threads", f"{tid}", "forum_avatar")
 
     def get_thread_info_path(self, tid: int):
-        return path.join(self.scraped_data_dir, "threads", f"{tid}", "thread_info.json")
+        return path.join(self.scraped_data_dir, "threads", f"{tid}", "thread.json")
 
     def get_user_avatar_dir(self, tid: int):
         """

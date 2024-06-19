@@ -4,7 +4,7 @@
 
 ## TiebaReader
 
-[TiebaReader](https://github.com/Sorceresssis/TiebaReader) 是与此项目对应的贴吧阅读器项目。目前还没有着手开发。
+[TiebaReader](https://github.com/Sorceresssis/TiebaReader) 是与此项目对应的贴吧阅读器项目。爬取的数据可以用该工具阅读。点击该项目的 Releases 下载。
 
 ## 用法
 
@@ -90,7 +90,7 @@ tid 类似于帖子的身份证。你可以从帖子的 url 中获取到它
 
 ```powershell
 [${forum_name}吧][${main_tid}]${thread_title}_${timestamp}
-    ├───scraper_info.json # 保存一些关于本次抓取的信息
+    ├───scrape_info.json # 保存一些关于本次抓取的信息
     ├───scrape.log  # 保存本次抓取的日志
     └───threads
         ├───${main_tid}
@@ -101,8 +101,8 @@ tid 类似于帖子的身份证。你可以从帖子的 url 中获取到它
         │   │   └───voices
         │   ├───user_avatar # 保存用户的头像
         │   ├───content.db # 保存帖子内容
-        │   ├───forum_info.json # 保存吧信息
-        │   └───thread_info.json # 保存帖子信息
+        │   ├───forum.json # 保存吧信息
+        │   └───thread.json # 保存帖子信息
         └───${share_origin_tid} # 保存主贴的原帖子，如果存在的话
             ├───forum_avatar
             ├───post_assets
@@ -111,8 +111,8 @@ tid 类似于帖子的身份证。你可以从帖子的 url 中获取到它
             │   └───voices
             ├───user_avatar
             ├───content.db
-            ├───forum_info.json
-            └───thread_info.json
+            ├───forum.json
+            └───thread.json
 
 ```
 
