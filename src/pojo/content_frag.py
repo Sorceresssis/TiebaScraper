@@ -92,6 +92,7 @@ class FragVideo(ContentFrag):
 
 @dataclass
 class FragVoice(ContentFrag):
+    filename: str
     md5: str
     duration: int
     tb_origin_src: str

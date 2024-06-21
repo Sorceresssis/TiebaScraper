@@ -163,4 +163,6 @@ class ContentService:
         self.tieba_origin_src_dao.insert(
             TiebaOriginSrcEntity(voice_filename, ContentFragType.VOICE, voice_url)
         )
-        return FragVoice(ContentFragType.VOICE, frag.md5, frag.duration, voice_url)
+        return FragVoice(
+            ContentFragType.VOICE, voice_filename, frag.md5, frag.duration, voice_url
+        )
