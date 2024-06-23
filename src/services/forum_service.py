@@ -27,8 +27,10 @@ class ForumService:
         origin_avatar_filename = "f_origin_avatar"
 
         try:
-            download_file(
-                forum_detail.small_avatar, forum_avatar_dir, small_avatar_filename
+            small_avatar_filename = download_file(
+                forum_detail.small_avatar,
+                forum_avatar_dir,
+                small_avatar_filename,
             )[0]
         except Exception as e:
             self.scrape_logger.error(
@@ -36,7 +38,7 @@ class ForumService:
             )
 
         try:
-            download_file(
+            origin_avatar_filename = download_file(
                 forum_detail.origin_avatar,
                 forum_avatar_dir,
                 origin_avatar_filename,

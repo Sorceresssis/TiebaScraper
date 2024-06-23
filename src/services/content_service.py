@@ -107,14 +107,29 @@ class ContentService:
 
     # 处理链接
     def __proc_link_frag(self, frag: FragLink_p) -> ContentFrag:
+        # frag.title: a标签的包裹的文本
+        # frag.text:对raw_url进行了处理，把`:`, `/` 等字符转义成了 URL编码(百分比编码), eg如下
+        # https://tieba.baidu.com/mo/q/checkurl?url=http%3A%2F%2Fwww.baidu.com&urlrefer=02e35c223e4027bc6328d73fafab664f
+        # frag.raw_url: 原始连接，可以直接点开, eg如下
+        # https://tieba.baidu.com/mo/q/checkurl?url=http://www.baidu.com&urlrefer=02e35c223e4027bc6328d73fafab664f
+
         raw_url = str(frag.raw_url)
-        prefix_index = raw_url.find(ContentService.FRAG_LINK_URL_PREFIX)
-        if prefix_index != -1:
-            raw_url = raw_url[prefix_index + len(ContentService.FRAG_LINK_URL_PREFIX) :]
-        suffix_index = raw_url.find(ContentService.FRAG_LINK_URL_SUFFIX)
-        if suffix_index != -1:
-            raw_url = raw_url[:suffix_index]
-        return FragLink(ContentFragType.LINK, frag.text, frag.title, raw_url)
+        raw_pfix_idx = raw_url.find(ContentService.FRAG_LINK_URL_PREFIX)
+        if raw_pfix_idx != -1:
+            raw_url = raw_url[raw_pfix_idx + len(ContentService.FRAG_LINK_URL_PREFIX) :]
+        raw_sfix_idx = raw_url.find(ContentService.FRAG_LINK_URL_SUFFIX)
+        if raw_sfix_idx != -1:
+            raw_url = raw_url[:raw_sfix_idx]
+
+        text = frag.text
+        text_pfix_idx = text.find(ContentService.FRAG_LINK_URL_PREFIX)
+        if text_pfix_idx != -1:
+            text = text[text_pfix_idx + len(ContentService.FRAG_LINK_URL_PREFIX) :]
+        text_sfix_idx = text.find(ContentService.FRAG_LINK_URL_SUFFIX)
+        if text_pfix_idx != -1:
+            text = text[:text_sfix_idx]
+
+        return FragLink(ContentFragType.LINK, text, frag.title, raw_url)
 
     def __proc_tiebaplus_frag(self, frag: FragTiebaPlus_p) -> ContentFrag:
         return FragTiebaPlus(ContentFragType.TIEBAPLUS, frag.text, str(frag.url))
@@ -158,7 +173,7 @@ class ContentService:
             voice_url,
             self.post_voice_dir,
             self.scraped_path_constructor.get_post_voice_filename(self.pid),
-            "mp3",
+            "amr",
         )[0]
         self.tieba_origin_src_dao.insert(
             TiebaOriginSrcEntity(voice_filename, ContentFragType.VOICE, voice_url)
