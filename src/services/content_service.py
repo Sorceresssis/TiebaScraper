@@ -26,6 +26,7 @@ from pojo.content_frag import (
 )
 from entity.tieba_origin_src_entity import TiebaOriginSrcEntity
 from dao.tieba_origin_src_dao import TiebaOriginSrcDao
+from services.user_service import UserService
 
 
 class ContentService:
@@ -41,16 +42,21 @@ class ContentService:
         self.post_image_dir = self.scraped_path_constructor.get_post_image_dir(self.tid)
         self.post_video_dir = self.scraped_path_constructor.get_post_video_dir(self.tid)
         self.post_voice_dir = self.scraped_path_constructor.get_post_voice_dir(self.tid)
+        self.userService = UserService()
 
     # 处理内容
-    def process_contents(self, pid: int, floor, objs: list) -> str:
+    async def process_contents(self, pid: int, floor, objs: list) -> str:
         self.pid = pid
         self.floor = floor
-        contents = list(map(lambda obj: self.get_proced_frag(obj), objs))
+        contents = list[ContentFrag]()
+
+        for obj in objs:
+            contents.append(await self.get_proced_frag(obj))
+
         return orjson.dumps(contents).decode("utf-8")
 
     # 根据类名来获取处理函数
-    def get_proced_frag(self, obj) -> ContentFrag:
+    async def get_proced_frag(self, obj) -> ContentFrag:
         class_name = type(obj).__name__
 
         if "FragText" in class_name:
@@ -60,7 +66,7 @@ class ContentService:
         elif "FragImage" in class_name:
             return self.__proc_image_frag(obj)
         elif "FragAt" in class_name:
-            return self.__proc_at_frag(obj)
+            return await self.__proc_at_frag(obj)
         elif "FragLink" in class_name:
             return self.__proc_link_frag(obj)
         elif "FragTiebaPlus" in class_name:
@@ -102,7 +108,9 @@ class ContentService:
         )
 
     # 处理AT
-    def __proc_at_frag(self, frag: FragAt_p) -> ContentFrag:
+    async def __proc_at_frag(self, frag: FragAt_p) -> ContentFrag:
+        # 把被AT的用户的信息也存入数据库
+        await self.userService.save_user_by_id(frag.user_id)
         return FragAt(ContentFragType.AT, frag.text, frag.user_id)
 
     # 处理链接

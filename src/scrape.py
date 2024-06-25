@@ -16,7 +16,13 @@ async def scrape(tid: int):
 
     posts = await get_posts(tid)
     if posts.thread.tid == 0:
-        print("Error: 帖子不存在, 请检查tid")
+        print(
+            """Error: 可能是一下原因:
+1. 网络问题, 可以多试几次
+2. tid错误, 请检查是否输入正确
+3. 帖子可能已被删除
+"""
+        )
         return
 
     scraped_path_constructor = ScrapedPathConstructor(

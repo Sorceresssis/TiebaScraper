@@ -135,7 +135,7 @@ class ThreadService:
         await self.user_service.save_user_info_by_uip(post.user)
 
         # 爬取帖子内容
-        post_contents = self.content_service.process_contents(
+        post_contents = await self.content_service.process_contents(
             post.pid, post.floor, post.contents.objs
         )
 
@@ -162,7 +162,7 @@ class ThreadService:
         await self.user_service.save_user_info_by_uic(comment.user)
 
         # 爬取回复内容
-        comment_contents = self.content_service.process_contents(
+        comment_contents = await self.content_service.process_contents(
             comment.pid, comment.floor, comment.contents.objs
         )
 

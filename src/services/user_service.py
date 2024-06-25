@@ -96,7 +96,6 @@ class UserService:
             user_info = await get_user_info(user_entity.id)
             retry -= 1
 
-        # 已经注销的用户
         if user_info:
             user_entity.glevel = user_info.glevel
             user_entity.ip = user_info.ip
@@ -115,6 +114,64 @@ class UserService:
             self.scrape_logger.warning(
                 f"用户: {user_entity.id} 已注销。portrait={user_entity.portrait}"
             )
+
+        user_avatar_url = get_user_avatar_url(user_entity.portrait)
+
+        try:
+            user_entity.avatar = download_file(
+                user_avatar_url,
+                self.user_avatar_dir,
+                self.scraped_path_constructor.get_user_avatar_filename(user_entity.id),
+            )[0]
+
+            # 写入tieba_origin_src表
+            self.tieba_origin_src_dao.insert(
+                TiebaOriginSrcEntity(
+                    user_entity.avatar, ContentFragType.IMAGE, user_avatar_url
+                )
+            )
+
+        except Exception as e:
+            print(f"下载用户头像失败, user_id={user_entity.id}, url={user_avatar_url}")
+            self.scrape_logger.error(
+                f"下载用户头像失败, user_id={user_entity.id}, url={user_avatar_url}, 错误描述:{e}"
+            )
+
+        self.user_dao.insert(user_entity)
+
+    async def save_user_by_id(self, user_id: int):
+        user_info = None
+        retry = 3
+        while user_info is None and retry:
+            user_info = await get_user_info(user_id)
+            retry -= 1
+
+        if not user_info:
+            return
+
+        user_entity = UserEntity(
+            user_info.user_id,
+            user_info.portrait,
+            user_info.user_name,
+            user_info.nick_name_new,
+            "",
+            user_info.glevel,
+            user_info.gender,
+            user_info.ip,
+            user_info.is_vip,
+            user_info.is_god,
+            user_info.tieba_uid,
+            user_info.age,
+            user_info.sign,
+            user_info.post_num,
+            user_info.agree_num,
+            user_info.fan_num,
+            user_info.follow_num,
+            user_info.forum_num,
+            0,
+            False,
+            UserStatus.ACTIVE,
+        )
 
         user_avatar_url = get_user_avatar_url(user_entity.portrait)
 
