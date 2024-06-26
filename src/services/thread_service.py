@@ -31,12 +31,16 @@ class ThreadService:
         posts_pn = 1
         posts_rn = 30
         posts_total_page = posts_pn + 1
+        failures = 0
         while posts_total_page > posts_pn:
 
             posts = await get_posts(self.tid, posts_pn, posts_rn)
             # 有时候网络请求会失败，继续爬取当前页
-            if posts:
+            if posts or failures > 2:
                 posts_pn += 1
+                failures = 0
+            else:
+                failures += 1
 
             if posts_pn == 2:
                 # 查看是否有分享帖

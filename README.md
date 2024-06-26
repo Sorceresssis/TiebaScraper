@@ -8,6 +8,10 @@
 
 ## 用法
 
+### 演示视频
+
+[Bilibili](https://www.bilibili.com/video/BV1uK3BeCENa)
+
 ### 安装依赖
 
 python>=3.8

@@ -140,6 +140,10 @@ class UserService:
         self.user_dao.insert(user_entity)
 
     async def save_user_by_id(self, user_id: int):
+        # 查询用户是否已经保存
+        if self.user_dao.check_exists_by_id(user_id):
+            return
+
         user_info = None
         retry = 3
         while user_info is None and retry:
