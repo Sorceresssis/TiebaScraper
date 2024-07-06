@@ -32,7 +32,8 @@ class ThreadService:
         posts_rn = 30
         posts_total_page = posts_pn + 1
         failures = 0
-        while posts_total_page > posts_pn:
+        saved_thread_info = False
+        while posts_total_page >= posts_pn:
 
             posts = await get_posts(self.tid, posts_pn, posts_rn)
             # 有时候网络请求会失败，继续爬取当前页
@@ -42,7 +43,8 @@ class ThreadService:
             else:
                 failures += 1
 
-            if posts_pn == 2:
+            if (not saved_thread_info) and posts:
+                saved_thread_info = True
                 # 查看是否有分享帖
                 self.share_origin = posts.thread.share_origin.tid
 
@@ -54,7 +56,12 @@ class ThreadService:
 
             # 保存帖子内容和用户
             for post in posts.objs:
-                await self.save_post(post)
+                # 请求的数据会出现 pid 重复的情况。会触发pid的UniqueConstraintError
+                try:
+                    await self.save_post(post)
+                except Exception as e:
+                    print(f"保存帖子失败: {post.pid}, {e}")
+                    self.scrape_logger.error(f"保存帖子失败: {post.pid}, {e}")
 
                 # 爬取回复
                 if len(post.comments) == 0:
@@ -67,7 +74,13 @@ class ThreadService:
 
                     comments = await get_comments(self.tid, post.pid, comments_pn)
                     for comment in comments.objs:
-                        await self.save_comment(comment)
+                        try:
+                            await self.save_comment(comment)
+                        except Exception as e:
+                            print(f"保存评论失败: {comment.pid}, {e}")
+                            self.scrape_logger.error(
+                                f"保存评论失败: {comment.pid}, {e}"
+                            )
 
                     comments_total_page = (
                         comments.page.total_page
@@ -76,7 +89,7 @@ class ThreadService:
                     )
 
             print(
-                f"第{posts_pn}页爬取完成, 共{posts.page.total_page}页, 每页{posts_rn}个帖子"
+                f"第{posts_pn - 1}页爬取完成, 共{posts.page.total_page}页, 每页{posts_rn}个帖子"
             )
 
             # 部分帖子会出现某一页请求超出范围的问题，但实际上后面还有楼层，因此第一次请求的total_page是才是准确的。后续的 has_more 和 total_page 可能是错误的。
