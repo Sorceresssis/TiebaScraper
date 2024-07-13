@@ -1,0 +1,28 @@
+name: Feature Requestt / 我想要一个新功能
+description: I think adding this feature would make it better.
+labels:
+    - enhancement
+title: "[Enhancement] "
+
+body:
+    - type: markdown
+      attributes:
+          value: |
+              Please describe your idea here. If you have mockups or diagrams, please upload them in the text box below.
+    - type: textarea
+      id: desc
+      attributes:
+          label: Description / 描述
+          description: Describe the feature you would like to add.
+          placeholder: I want the background image to change with the color of the phone case.
+      validations:
+          required: true
+    - type: textarea
+      id: operation
+      attributes:
+          label: Operations / 具体操作
+          description: If you have specific ideas about the operations or workflow, please describe them here.
+          # placeholder:
+          # value:
+      validations:
+          required: false

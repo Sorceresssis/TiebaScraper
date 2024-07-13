@@ -5,6 +5,7 @@ from db.content_db import ContentDB
 
 class Container:
     tid: int = 0
+    current_posts_pn: int = 1
     # scraped_path_constructor 部分功能依赖于tid
     scraped_path_constructor: ScrapedPathConstructor | None = None
     scrape_logger: ScrapeLogger | None  # 依赖于scraped_path_constructor
@@ -17,6 +18,14 @@ class Container:
     @classmethod
     def set_tid(cls, tid: int) -> None:
         cls.tid = tid
+
+    @classmethod
+    def get_current_posts_pn(cls) -> int:
+        return cls.current_posts_pn
+
+    @classmethod
+    def set_current_posts_pn(cls, current_posts_pn: int) -> None:
+        cls.current_posts_pn = current_posts_pn
 
     @classmethod
     def set_scraped_path_constructor(

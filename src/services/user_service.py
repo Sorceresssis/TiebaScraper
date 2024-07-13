@@ -2,6 +2,7 @@ from aiotieba.api.get_posts import UserInfo_p
 from aiotieba.api.get_comments import UserInfo_c
 from net.aiotieba_client import get_user_info
 from config.constant_config import get_user_avatar_url
+from tieba_property import DOWNLOAD_USER_AVATAR
 from utils.fs import download_file
 from container import Container
 from dao.user_dao import UserDao
@@ -115,28 +116,9 @@ class UserService:
                 f"用户: {user_entity.id} 已注销。portrait={user_entity.portrait}"
             )
 
-        user_avatar_url = get_user_avatar_url(user_entity.portrait)
-
-        try:
-            user_entity.avatar = download_file(
-                user_avatar_url,
-                self.user_avatar_dir,
-                self.scraped_path_constructor.get_user_avatar_filename(user_entity.id),
-            )[0]
-
-            # 写入tieba_origin_src表
-            self.tieba_origin_src_dao.insert(
-                TiebaOriginSrcEntity(
-                    user_entity.avatar, ContentFragType.IMAGE, user_avatar_url
-                )
-            )
-
-        except Exception as e:
-            print(f"下载用户头像失败, user_id={user_entity.id}, url={user_avatar_url}")
-            self.scrape_logger.error(
-                f"下载用户头像失败, user_id={user_entity.id}, url={user_avatar_url}, 错误描述:{e}"
-            )
-
+        user_entity.avatar = self._save_user_avatar(
+            user_entity.id, user_entity.portrait
+        )
         self.user_dao.insert(user_entity)
 
     async def save_user_by_id(self, user_id: int):
@@ -158,7 +140,7 @@ class UserService:
             user_info.portrait,
             user_info.user_name,
             user_info.nick_name_new,
-            "",
+            None,
             user_info.glevel,
             user_info.gender,
             user_info.ip,
@@ -177,26 +159,36 @@ class UserService:
             UserStatus.ACTIVE,
         )
 
-        user_avatar_url = get_user_avatar_url(user_entity.portrait)
-
-        try:
-            user_entity.avatar = download_file(
-                user_avatar_url,
-                self.user_avatar_dir,
-                self.scraped_path_constructor.get_user_avatar_filename(user_entity.id),
-            )[0]
-
-            # 写入tieba_origin_src表
-            self.tieba_origin_src_dao.insert(
-                TiebaOriginSrcEntity(
-                    user_entity.avatar, ContentFragType.IMAGE, user_avatar_url
-                )
-            )
-
-        except Exception as e:
-            print(f"下载用户头像失败, user_id={user_entity.id}, url={user_avatar_url}")
-            self.scrape_logger.error(
-                f"下载用户头像失败, user_id={user_entity.id}, url={user_avatar_url}, 错误描述:{e}"
-            )
+        user_entity.avatar = self._save_user_avatar(
+            user_entity.id, user_entity.portrait
+        )
 
         self.user_dao.insert(user_entity)
+
+    # 有数据库操作，需要事务包裹
+    def _save_user_avatar(self, user_id: int, portrait: str) -> None | str:
+        if DOWNLOAD_USER_AVATAR == 0:
+            return None
+        else:
+            user_avatar_url = get_user_avatar_url(portrait)
+
+            try:
+                avatar_filename = download_file(
+                    user_avatar_url,
+                    self.user_avatar_dir,
+                    self.scraped_path_constructor.get_user_avatar_filename(user_id),
+                )[0]
+
+                # 写入tieba_origin_src表
+                self.tieba_origin_src_dao.insert(
+                    TiebaOriginSrcEntity(
+                        avatar_filename, ContentFragType.IMAGE, user_avatar_url
+                    )
+                )
+                return avatar_filename
+            except Exception as e:
+                print(f"下载用户头像失败, user_id={user_id}, url={user_avatar_url}")
+                self.scrape_logger.error(
+                    f"下载用户头像失败, user_id={user_id}, url={user_avatar_url}, 错误描述:{e}"
+                )
+                return None

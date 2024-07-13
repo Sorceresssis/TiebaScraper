@@ -17,13 +17,15 @@ async def scrape(tid: int):
     posts = await get_posts(tid)
     if posts.thread.tid == 0:
         print(
-            """Error: 可能是一下原因:
+            """Error: 可能是以下原因:
 1. 网络问题, 可以多试几次
 2. tid错误, 请检查是否输入正确
 3. 帖子可能已被删除
 """
         )
         return
+
+    print(f"tid:{tid}, 标题: {posts.thread.title}")
 
     scraped_path_constructor = ScrapedPathConstructor(
         posts.forum.fname, posts.thread.tid, posts.thread.title

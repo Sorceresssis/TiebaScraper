@@ -23,10 +23,19 @@ class ContentFragType(IntEnum):
     VIDEO = auto()
     VOICE = auto()
 
+    SCRAPE_ERROR = -1
+
 
 @dataclass
 class ContentFrag:
     type: int
+
+
+# NOTE 这是一个非常特殊的frag, 它不是贴吧原有的内容, 而是用于标记爬取过程中出现错误的分块
+@dataclass
+class FragScrapeError(ContentFrag):
+    error_frag_type: int
+    error_frag_name: str
 
 
 @dataclass

@@ -178,10 +178,6 @@ https://tiebac.baidu.com/c/p/voice?voice_md5=$voice_md5&play_from=pb_voice_play
 
 已经发布的小尾巴不会随着用户修改小尾巴而改变。
 
-### Create_Time
-
-是中国标准时区，不是 gmt
-
 ### 分块编号
 
 ```python
@@ -237,6 +233,8 @@ elif _type == 34:
 网页端会显示设备，但是移动端 api 没有设备信息。
 
 ![1717232574390](./assets/note/images/1717232574390.png)
+
+### 自定义填字表情包
 
 ## Comments
 

@@ -36,37 +36,35 @@ class ContentDB(sqlite3.Connection):
         CREATE INDEX 'idx_post(parent_id)' ON post (parent_id);
 
 
-        
         DROP TABLE IF EXISTS 'user';
         CREATE TABLE user
         (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,
-            portrait   TEXT               NOT NULL,
+            portrait   TEXT                 NOT NULL,
             username   TEXT    DEFAULT NULL NULL,
-            nickname   TEXT               NOT NULL,
-            avatar     TEXT    DEFAULT '' NOT NULL,
-            glevel     INTEGER DEFAULT 0  NOT NULL,
-            gender     INTEGER DEFAULT 0  NOT NULL,
-            ip         TEXT    DEFAULT '' NOT NULL,
-            is_vip     BOOLEAN DEFAULT 0  NOT NULL,
-            is_god     BOOLEAN DEFAULT 0  NOT NULL,
+            nickname   TEXT                 NOT NULL,
+            avatar     TEXT    DEFAULT NULL NULL,
+            glevel     INTEGER DEFAULT 0    NOT NULL,
+            gender     INTEGER DEFAULT 0    NOT NULL,
+            ip         TEXT    DEFAULT ''   NOT NULL,
+            is_vip     BOOLEAN DEFAULT 0    NOT NULL,
+            is_god     BOOLEAN DEFAULT 0    NOT NULL,
             tieba_uid  INTEGER DEFAULT NULL NULL,
-            age        FLOAT              NOT NULL,
-            sign       TEXT    DEFAULT '' NOT NULL,
-            post_num   INTEGER DEFAULT 0  NOT NULL,
-            agree_num  INTEGER DEFAULT 0  NOT NULL,
-            fan_num    INTEGER DEFAULT 0  NOT NULL,
-            follow_num INTEGER DEFAULT 0  NOT NULL,
-            forum_num  INTEGER DEFAULT 0  NOT NULL,
-            level      INTEGER DEFAULT 0  NOT NULL,
-            is_bawu    BOOLEAN DEFAULT 0  NOT NULL,
-            status     INTEGER DEFAULT 0  NOT NULL
+            age        FLOAT                NOT NULL,
+            sign       TEXT    DEFAULT ''   NOT NULL,
+            post_num   INTEGER DEFAULT 0    NOT NULL,
+            agree_num  INTEGER DEFAULT 0    NOT NULL,
+            fan_num    INTEGER DEFAULT 0    NOT NULL,
+            follow_num INTEGER DEFAULT 0    NOT NULL,
+            forum_num  INTEGER DEFAULT 0    NOT NULL,
+            level      INTEGER DEFAULT 0    NOT NULL,
+            is_bawu    BOOLEAN DEFAULT 0    NOT NULL,
+            status     INTEGER DEFAULT 0    NOT NULL
         );
-        CREATE UNIQUE INDEX 'uk_user(portrait)' ON 'user'(portrait);
-        CREATE UNIQUE INDEX 'uk_user(username)' ON 'user'(username);
-        CREATE UNIQUE INDEX 'uk_user(tieba_uid)' ON 'user'(tieba_uid);
+        CREATE UNIQUE INDEX 'uk_user(portrait)' ON 'user' (portrait);
+        CREATE UNIQUE INDEX 'uk_user(username)' ON 'user' (username);
+        CREATE UNIQUE INDEX 'uk_user(tieba_uid)' ON 'user' (tieba_uid);
 
-        
 
         DROP TABLE IF EXISTS content_fragment_type;
         CREATE TABLE content_fragment_type
@@ -75,7 +73,6 @@ class ContentDB(sqlite3.Connection):
             type TEXT NOT NULL
         );
 
-        
 
         DROP TABLE IF EXISTS tieba_origin_src;
         CREATE TABLE tieba_origin_src
@@ -85,8 +82,8 @@ class ContentDB(sqlite3.Connection):
             content_frag_type INTEGER NOT NULL,
             origin_src        TEXT    NOT NULL
         );
-        CREATE UNIQUE INDEX 'uk_tieba_origin_src(filename)' ON tieba_origin_src     (filename);
-        CREATE INDEX 'idx_tieba_origin_src(content_frag_type)' ON tieba_origin_src      (content_frag_type);
+        CREATE UNIQUE INDEX 'uk_tieba_origin_src(filename)' ON tieba_origin_src (filename);
+        CREATE INDEX 'idx_tieba_origin_src(content_frag_type)' ON tieba_origin_src (content_frag_type);
         """
         self.executescript(DDL)
 

@@ -6,6 +6,11 @@
 
 [TiebaReader](https://github.com/Sorceresssis/TiebaReader) 是与此项目对应的贴吧阅读器项目。爬取的数据可以用该工具阅读。点击该项目的 Releases 下载。
 
+## 注意事项
+
+1. 有时出现错误，是网络的问题，多试几次即可
+2. 已经注销的用户保存的数据会有缺失。
+
 ## 用法
 
 ### 演示视频
@@ -18,8 +23,14 @@ python>=3.8
 
 下载并打开项目后，在终端中运行以下命令安装依赖
 
-```
+```powershell
 pip install -r requirements.txt
+```
+
+安装 aiotieba 库的最新开发版
+
+```powershell
+pip install --upgrade git+https://github.com/Starry-OvO/aiotieba.git@develop
 ```
 
 ### 配置 BDUSS
@@ -44,21 +55,9 @@ BDUSS 是一串由纯 ascii 字符组成的，长度为 192 的字符串
 
 ![1718142431342](./docs/assets/README/images/1718142431342.png)
 
-把复制到的值填写到 `src/tieba_property.py` 中。用 `""`包裹赋后值给 BDUSS 变量即可
+把复制到的值填写到 `src/tieba_property.py` 中。用 `""`包裹后赋值给 BDUSS 变量即可
 
 ![1718141716625](./docs/assets/README/images/1718141716625.png)
-
-### 修改 aiotieba 库的源代码(语音下载)
-
-没有语音获取需求可以跳过此步。
-
-由于 aiotieba 库对语音的 md5 值做了截取处理，导致无法正确下载语音文件。所以要禁止 aiotieba 库对 md5 值做截取处理。
-
-python 安装路径下的 `lib/site_packages/aiotieba` 就是 aiotieba 库的源代码目录。例如: `C:\Program Files\Python312\Lib\site-packages\aiotieba`
-
-打开 aiotieba 源代码目录后打开 `api/_classdef.py` 文件。找到下图代码的位置并修改成下图代码
-
-![1718148288015](./docs/assets/README/images/1718148288015.png)
 
 ### 获取帖子的 tid
 
@@ -77,6 +76,28 @@ tid 类似于帖子的身份证。你可以从帖子的 url 中获取到它
 等待抓取完成。数据保存在工作目录下的 `scraped_data` 文件夹里。
 
 ![1718143141194](./docs/assets/README/images/1718143141194.png)
+
+## 其他配置
+
+### 用户头像清晰度
+
+文件 `src/tieba_property.py` 中的 `DOWNLOAD_USER_AVATAR` 参数可以对用户的头像下载操作进行配置：
+
+```python
+# 0 不下载头像
+# 1为下载低清头像
+# 2为下载高清头像
+
+DOWNLOAD_USER_AVATAR = 2
+```
+
+**低清头像样例**
+
+![1720768108538](./docs/assets/README/images/1720768108538.jpg)
+
+**高清头像样例**
+
+![1720768116148](./docs/assets/README/images/1720768116148.jpg)
 
 ## 数据保存的目录结构
 
@@ -120,18 +141,17 @@ tid 类似于帖子的身份证。你可以从帖子的 url 中获取到它
 
 ```
 
-## References
+## Docs
 
-内容的处理细节可以参考[note](./docs/note.md)
+[贴吧内容 Note](./docs/note.md)
 
-[数据库 DDL](./references/SQL/DDL.sql)
+贴吧官方的错误: [贴吧错误说明](./docs/tieba_error_desc.md)
 
-## 注意事项
+[数据库 DDL](./docs/SQL/DDL.sql)
 
-有时候请求错误，多试一下就可以。
+## 鸣谢
 
-已经注销的用户的爬取时会有信息缺失。
+感谢这些项目作者的帮助。
 
-## License
-
-[MIT License](./LICENSE.txt)
+-   [Starry-OvO/aiotieba: Asynchronous I/O Client for Baidu Tieba](https://github.com/Starry-OvO/aiotieba)
+-   [n0099/tbclient.protobuf: 百度贴吧客户端 Protocol Buffers 定义文件合集](https://github.com/n0099/tbclient.protobuf)

@@ -1,7 +1,6 @@
 import os
 import re
 import requests
-from urllib.parse import urlparse
 
 
 def sanitize_filename(filename: str) -> str:

@@ -7,7 +7,7 @@ class UserEntity:
     portrait: str
     username: str | None
     nickname: str
-    avatar: str
+    avatar: str | None
     glevel: int
     gender: int
     ip: str

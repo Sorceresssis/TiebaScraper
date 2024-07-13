@@ -1,0 +1,41 @@
+name: Bug report / 报告问题
+description: Something isn't working as expected.
+labels:
+    - bug
+title: "[Bug] "
+
+body:
+    - type: markdown
+      attributes:
+          value: |
+              Please describe the problem you are experiencing. If you have screenshots, please upload them in the text box below. We promise not to laugh at your weird problem.
+    - type: textarea
+      id: desc
+      attributes:
+          label: Description / 描述
+          description: Provide a detailed description of the issue you encountered.
+      validations:
+          required: true
+    - type: textarea
+      id: steps-to-reproduce
+      attributes:
+          label: Steps to reproduce / 重现步骤
+          description: Tell us how we can reproduce the issue so we can experience the magic as well.
+      validations:
+          required: true
+    - type: textarea
+      id: expected-result
+      attributes:
+          label: Expected result / 期望的结果
+          description: Describe what you expected to happen.
+      validations:
+          required: false
+    - type: textarea
+      id: additional_context
+      attributes:
+          label: Additional context / 其他信息
+          description: If you have any other information, please tell us here.
+          placeholder: |
+              Python version: 3.8
+      validations:
+          required: false

@@ -12,9 +12,9 @@ async def get_forum_detail(fname_or_fid: str | int):
         return await client.get_forum_detail(fname_or_fid)
 
 
-async def get_posts(tid: int, pn=1, rn=30):
+async def get_posts(tid: int, pn=1):
     async with tb.Client(BDUSS) as client:
-        return await client.get_posts(tid, pn, rn=rn, with_comments=True)
+        return await client.get_posts(tid, pn, with_comments=True)
 
 
 async def get_comments(tid: int, pid: int, pn=1):
