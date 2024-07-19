@@ -1,4 +1,7 @@
-from dataclasses import dataclass, asdict
+import time
+from dataclasses import dataclass
+
+from config.scraper_config import SCRAPER_VERSION
 
 
 @dataclass
@@ -13,5 +16,12 @@ class ScraperInfo:
     """
 
     main_thread: int
-    scraper_version: str
     create_time: int
+    update_record: list[str]
+    scraper_version: str
+
+    def __init__(self, main_thread: int) -> None:
+        self.main_thread = main_thread
+        self.create_time = int(time.time())
+        self.update_times = []
+        self.scraper_version = SCRAPER_VERSION

@@ -1,8 +1,8 @@
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 
 
 @dataclass
-class VoteOptoin:
+class VoteOption:
     text: str
     vote_num: int
 
@@ -13,7 +13,7 @@ class VoteInfo:
     is_multi: bool
     total_vote: int
     total_user: int
-    options: list[VoteOptoin]
+    options: list[VoteOption]
 
 
 @dataclass

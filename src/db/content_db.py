@@ -1,5 +1,6 @@
 import sqlite3
 from typing import Callable
+
 from pojo.content_frag import ContentFragType
 
 
@@ -7,6 +8,7 @@ class ContentDB(sqlite3.Connection):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.isolation_level = None  # 开启自动提交
+        self.execute("pragma journal_mode=wal;")
         self.__data_definition()  # 创建表
         self.__insert_content_fragment_type()  # 插入一些提前定义的数据
 
@@ -40,16 +42,16 @@ class ContentDB(sqlite3.Connection):
         CREATE TABLE user
         (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,
-            portrait   TEXT                 NOT NULL,
+            portrait   TEXT    DEFAULT NULL NULL,
             username   TEXT    DEFAULT NULL NULL,
             nickname   TEXT                 NOT NULL,
+            tieba_uid  INTEGER DEFAULT NULL NULL,
             avatar     TEXT    DEFAULT NULL NULL,
             glevel     INTEGER DEFAULT 0    NOT NULL,
             gender     INTEGER DEFAULT 0    NOT NULL,
             ip         TEXT    DEFAULT ''   NOT NULL,
             is_vip     BOOLEAN DEFAULT 0    NOT NULL,
             is_god     BOOLEAN DEFAULT 0    NOT NULL,
-            tieba_uid  INTEGER DEFAULT NULL NULL,
             age        FLOAT                NOT NULL,
             sign       TEXT    DEFAULT ''   NOT NULL,
             post_num   INTEGER DEFAULT 0    NOT NULL,
@@ -62,7 +64,6 @@ class ContentDB(sqlite3.Connection):
             status     INTEGER DEFAULT 0    NOT NULL
         );
         CREATE UNIQUE INDEX 'uk_user(portrait)' ON 'user' (portrait);
-        CREATE UNIQUE INDEX 'uk_user(username)' ON 'user' (username);
         CREATE UNIQUE INDEX 'uk_user(tieba_uid)' ON 'user' (tieba_uid);
 
 
@@ -97,6 +98,7 @@ class ContentDB(sqlite3.Connection):
             (ContentFragType.TIEBAPLUS, "tiebaplus"),
             (ContentFragType.VIDEO, "video"),
             (ContentFragType.VOICE, "voice"),
+            (ContentFragType.SCRAPE_ERROR, "scrape_error"),
         ]
         sql = "INSERT INTO content_fragment_type(id, type) VALUES (?, ?); "
         self.executemany(sql, params)

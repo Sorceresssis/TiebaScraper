@@ -1,89 +1,97 @@
 import os
-from os import path
+import re
 import time
-from utils.fs import sanitize_filename
+from os import path
 
 
-def unique_timestamp() -> int:
-    # 睡眠一毫秒
-    time.sleep(0.001)
-    # 获取当前时间的毫秒时间戳
-    timestamp = int(time.time() * 1000)
+def sanitize_filename(filename: str) -> str:
+    """
+    去除文件名中的非法字符，并返回新的文件名
+    要注意, 返回的可能是空字符串
+    """
+
+    invalid_chars = r'[<>:"/\\|?*]'
+    sanitized_filename = re.sub(invalid_chars, "", filename)
+    return sanitized_filename
+
+
+def get_timestamp() -> int:
+    timestamp = int(time.time() * 1000000)
     return timestamp
 
 
-class ScrapedPathConstructor:
-    # 存放在工作目录下的scraped_data
+class ScrapeDataPathBuilder:
     base = path.join(os.getcwd(), "scraped_data")
 
-    def __init__(self, forum_name: str, tid: int, ttitle: str) -> None:
-        self.scraped_data_dir = path.join(
+    def __init__(self, forum_name: str, tid: int, title: str) -> None:
+        self.item_dir = path.join(
             self.base,
-            f"[{forum_name}吧][{tid}]{sanitize_filename(ttitle)}_{unique_timestamp()}",
+            f"[{forum_name}吧][{tid}]{sanitize_filename(title)}_{get_timestamp()}",
         )
-        os.makedirs(self.scraped_data_dir, exist_ok=True)
+        os.makedirs(self.item_dir, exist_ok=True)
 
-    def get_scraped_data_dir(self) -> str:
-        return self.scraped_data_dir
+    def get_item_dir(self) -> str:
+        return self.item_dir
 
-    def get_scrape_log_path(self):
-        return path.join(self.scraped_data_dir, "scrape.log")
+    def get_scrape_info_path(self) -> str:
+        return path.join(self.item_dir, "scrape_info.json")
 
-    def get_scraper_info_path(self):
-        return path.join(self.scraped_data_dir, "scrape_info.json")
+    def get_thread_dir(self, tid: int) -> str:
+        return path.join(self.item_dir, "threads", f"{tid}")
 
-    def get_thread_dir(self, tid: int):
-        return path.join(self.scraped_data_dir, "threads", f"{tid}")
+    def get_scrape_log_path(self, tid: int) -> str:
+        return path.join(self.item_dir, "threads", f"{tid}", "scrape.log")
 
     def get_content_db_path(self, tid: int):
-        return path.join(self.scraped_data_dir, "threads", f"{tid}", "content.db")
+        return path.join(self.item_dir, "threads", f"{tid}", "content.db")
 
-    def get_forum_info_path(self, tid: int):
-        return path.join(self.scraped_data_dir, "threads", f"{tid}", "forum.json")
+    def get_forum_info_path(self, tid) -> str:
+        return path.join(self.item_dir, "threads", f"{tid}", "forum.json")
 
-    def get_forum_avatar_dir(self, tid: int):
-        return path.join(self.scraped_data_dir, "threads", f"{tid}", "forum_avatar")
+    def get_forum_avatar_dir(self, tid: int) -> str:
+        return path.join(self.item_dir, "threads", f"{tid}", "forum_avatar")
 
-    def get_thread_info_path(self, tid: int):
-        return path.join(self.scraped_data_dir, "threads", f"{tid}", "thread.json")
+    def get_thread_info_path(self, tid) -> str:
+        return path.join(self.item_dir, "threads", f"{tid}", "thread.json")
 
     def get_user_avatar_dir(self, tid: int):
-        """
-        存放用户头像的文件夹路径, 运行时会自动创建文件夹
-        """
-        dir = path.join(self.scraped_data_dir, "threads", f"{tid}", "user_avatar")
-        os.makedirs(dir, exist_ok=True)
-        return dir
+        avatar_dir = path.join(self.item_dir, "threads", f"{tid}", "user_avatar")
+        os.makedirs(avatar_dir, exist_ok=True)
+        return avatar_dir
 
-    def get_user_avatar_filename(self, uid: int):
-        return f"u_{uid}_{unique_timestamp()}"
+    @staticmethod
+    def get_user_avatar_filename(portrait: str):
+        return f"{portrait}"
 
     def get_post_image_dir(self, tid: int):
-        dir = path.join(
-            self.scraped_data_dir, "threads", f"{tid}", "post_assets", "images"
+        image_dir = path.join(
+            self.item_dir, "threads", f"{tid}", "post_assets", "images"
         )
-        os.makedirs(dir, exist_ok=True)
-        return dir
+        os.makedirs(image_dir, exist_ok=True)
+        return image_dir
 
     def get_post_video_dir(self, tid: int):
-        dir = path.join(
-            self.scraped_data_dir, "threads", f"{tid}", "post_assets", "videos"
+        video_dir = path.join(
+            self.item_dir, "threads", f"{tid}", "post_assets", "videos"
         )
-        os.makedirs(dir, exist_ok=True)
-        return dir
+        os.makedirs(video_dir, exist_ok=True)
+        return video_dir
 
     def get_post_voice_dir(self, tid: int):
-        dir = path.join(
-            self.scraped_data_dir, "threads", f"{tid}", "post_assets", "voices"
+        voice_dir = path.join(
+            self.item_dir, "threads", f"{tid}", "post_assets", "voices"
         )
-        os.makedirs(dir, exist_ok=True)
-        return dir
+        os.makedirs(voice_dir, exist_ok=True)
+        return voice_dir
 
-    def get_post_image_filename(self, pid: int):
-        return f"p_{pid}_{unique_timestamp()}"
+    @staticmethod
+    def get_post_image_filename(pid: int, idx: int):
+        return f"p_{pid}_{idx}-{get_timestamp()}"
 
-    def get_post_video_filename(self, pid: int):
-        return f"p_{pid}_{unique_timestamp()}"
+    @staticmethod
+    def get_post_video_filename(pid: int, idx: int):
+        return f"p_{pid}_{idx}-{get_timestamp()}"
 
-    def get_post_voice_filename(self, pid: int):
-        return f"p_{pid}_{unique_timestamp()}"
+    @staticmethod
+    def get_post_voice_filename(voice_hash: str):
+        return f"p_{voice_hash}"

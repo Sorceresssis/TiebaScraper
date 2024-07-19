@@ -1,5 +1,5 @@
-from container import Container
-from entity.post_entity import PostEntity
+from container.container import Container
+from pojo.post_entity import PostEntity
 
 
 class PostDao:
