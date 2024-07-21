@@ -1,20 +1,20 @@
 from enum import IntEnum
 
-from scrape_config import DOWNLOAD_USER_AVATAR
+from scrape_config import DOWNLOAD_USER_AVATAR_MODE
 
 
-class DownloadUserAvatarType(IntEnum):
+class DownloadUserAvatarModeType(IntEnum):
     NONE = 0  # 不下载
     LOW = 1  # 低清
     HIGH = 2  # 高清
 
 
 def get_user_avatar_base_url() -> str:
-    if DownloadUserAvatarType.LOW == DOWNLOAD_USER_AVATAR:
+    if DownloadUserAvatarModeType.LOW == DOWNLOAD_USER_AVATAR_MODE:
         return "http://tb.himg.baidu.com/sys/portrait/item/"
-    elif DownloadUserAvatarType.HIGH == DOWNLOAD_USER_AVATAR:
+    elif DownloadUserAvatarModeType.HIGH == DOWNLOAD_USER_AVATAR_MODE:
         return "https://himg.bdimg.com/sys/portraith/item/"
-    elif DownloadUserAvatarType.NONE == DOWNLOAD_USER_AVATAR:
+    elif DownloadUserAvatarModeType.NONE == DOWNLOAD_USER_AVATAR_MODE:
         return ""
     else:
         raise Exception("未知的头像下载类型")

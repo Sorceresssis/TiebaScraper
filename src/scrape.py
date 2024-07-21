@@ -1,3 +1,5 @@
+# 爬取一个帖子现存的全部内容并保存到本地
+
 import asyncio
 
 from modules.scrape_module import scrape

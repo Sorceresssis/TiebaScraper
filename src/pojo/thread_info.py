@@ -1,19 +1,19 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
 class VoteOption:
-    text: str
-    vote_num: int
+    text: str = field(default="")
+    vote_num: int = field(default=0)
 
 
 @dataclass
 class VoteInfo:
-    title: str
-    is_multi: bool
-    total_vote: int
-    total_user: int
-    options: list[VoteOption]
+    title: str = field(default="")
+    is_multi: bool = field(default=False)
+    total_vote: int = field(default=0)
+    total_user: int = field(default=0)
+    options: list[VoteOption] = field(default_factory=list)
 
 
 @dataclass
@@ -21,6 +21,7 @@ class ThreadInfo:
     id: int
     title: str
     forum_id: int
+    forum_name: str
     post_id: int
     user_id: int
     type: int

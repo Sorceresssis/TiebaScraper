@@ -21,14 +21,23 @@ def get_timestamp() -> int:
 
 
 class ScrapeDataPathBuilder:
-    base = path.join(os.getcwd(), "scraped_data")
+    DATA_FOLDER_NAME = "scraped_data"
 
-    def __init__(self, forum_name: str, tid: int, title: str) -> None:
-        self.item_dir = path.join(
-            self.base,
+    def __init__(self, item_dir) -> None:
+        self.item_dir = item_dir
+
+    @classmethod
+    def get_instance_scrape(cls, forum_name: str, tid: int, title: str) -> "ScrapeDataPathBuilder":
+        item_dir = path.join(
+            path.join(os.getcwd(), cls.DATA_FOLDER_NAME),
             f"[{forum_name}吧][{tid}]{sanitize_filename(title)}_{get_timestamp()}",
         )
-        os.makedirs(self.item_dir, exist_ok=True)
+        os.makedirs(item_dir, exist_ok=True)
+        return ScrapeDataPathBuilder(item_dir)
+
+    @classmethod
+    def get_instance_scrape_update(cls, source_path: str) -> "ScrapeDataPathBuilder":
+        return ScrapeDataPathBuilder(source_path)
 
     def get_item_dir(self) -> str:
         return self.item_dir
@@ -59,10 +68,6 @@ class ScrapeDataPathBuilder:
         os.makedirs(avatar_dir, exist_ok=True)
         return avatar_dir
 
-    @staticmethod
-    def get_user_avatar_filename(portrait: str):
-        return f"{portrait}"
-
     def get_post_image_dir(self, tid: int):
         image_dir = path.join(
             self.item_dir, "threads", f"{tid}", "post_assets", "images"
@@ -83,6 +88,10 @@ class ScrapeDataPathBuilder:
         )
         os.makedirs(voice_dir, exist_ok=True)
         return voice_dir
+
+    @staticmethod
+    def get_user_avatar_filename(portrait: str):
+        return f"{portrait}"
 
     @staticmethod
     def get_post_image_filename(pid: int, idx: int):

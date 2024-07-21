@@ -1,5 +1,3 @@
-import asyncio
-
 import aiotieba as tb
 
 from tieba_auth import BDUSS
@@ -17,7 +15,6 @@ async def get_forum(fname_or_fid: str | int, retry=3):
                 failures += 1
                 MsgPrinter.print_error(f"第 {failures}/{retry} 次请求失败", "FetchForum",
                                        ["fname_or_fid", fname_or_fid])
-                await asyncio.sleep(0.5)
 
     return None
 
@@ -33,7 +30,6 @@ async def get_forum_detail(fname_or_fid: str | int, retry=3):
                 failures += 1
                 MsgPrinter.print_error(f"第 {failures}/{retry} 次请求失败", "FetchForumDetail",
                                        ["fname_or_fid", fname_or_fid])
-                await asyncio.sleep(0.5)
 
     return None
 
@@ -48,7 +44,7 @@ async def get_posts(tid: int, pn=1, retry=3):
             else:
                 failures += 1
                 MsgPrinter.print_error(f"第 {failures}/{retry} 次请求失败", "FetchPosts", ["tid", tid, "pn", pn])
-                await asyncio.sleep(0.5)
+
     return None
 
 
@@ -61,9 +57,10 @@ async def get_comments(tid: int, pid: int, floor: int, pn=1, retry=3):
                 return comments
             else:
                 failures += 1
-                MsgPrinter.print_error(f"第 {failures}/{retry} 次请求失败", "FetchComments",
-                                       ["tid", tid, "floor", floor, "pid", pid, "pn", pn])
-                await asyncio.sleep(0.5)
+                MsgPrinter.print_error(
+                    f"第 {failures}/{retry} 次请求失败", "FetchComments",
+                    ["tid", tid, "floor", floor, "pid", pid, "pn", pn]
+                )
 
     return None
 
@@ -89,5 +86,5 @@ async def get_user_info(user_id: str | int, portrait: str | None, retry=3):
                 failures += 1
                 MsgPrinter.print_error(f"第 {failures}/{retry} 次请求失败", "FetchUserInfo",
                                        ["user_id", user_id, "portrait", portrait])
-                await asyncio.sleep(0.5)
+
     return None

@@ -1,7 +1,7 @@
 import asyncio
+import math
 
-from aiotieba.api.get_posts._classdef import Forum_p, Thread_p
-from aiotieba.typing import Posts, Comments
+from aiotieba.typing import Posts, Comments, Post
 
 from api.aiotieba_client import get_posts, get_comments
 from container.container import Container
@@ -16,44 +16,43 @@ from utils.msg_printer import MsgPrinter
 
 class PostService:
     def __init__(self):
-        self.thread_info: Thread_p | None = None
-        self.forum_info: Forum_p | None = None
         self.tid = Container.get_tid()
         self.scrape_logger = Container.get_scrape_logger()
         self.post_dao = PostDao()
         self.content_service = ContentService()
         self.user_service = UserService()
 
-    def get_thread_info(self) -> Thread_p:
-        if self.thread_info is None:
-            raise Exception("Thread info not requested")
-
-        return self.thread_info
-
-    def get_forum_info(self) -> Forum_p:
-        if self.forum_info is None:
-            raise Exception("Forum info not requested")
-
-        return self.forum_info
-
-    async def scrape_post(self):
-        queue_maxsize = 8
-        producers_num = 1
+    async def scrape_post(self, total_page: int):
+        queue_maxsize = 10
+        producers_num = total_page if total_page < 3 else 3
         consumers_num = 8
         consumer_await_timeout = 8
         contact = ProducerConsumerContact(queue_maxsize, producers_num, consumers_num, consumer_await_timeout)
 
-        await asyncio.gather(
-            self.fetch_post(contact),
-            *[self.save_post(contact) for _ in range(consumers_num)],
-        )
+        fetch_len = math.ceil(total_page / producers_num)
+        total_page += 1  # 前闭后开
+        tasks = []
 
-    async def fetch_post(self, contact: ProducerConsumerContact) -> None:
-        saved_thread_info = False
-        pn = 1
-        total_page = pn
+        for start_pn in range(1, total_page, fetch_len):
+            tasks.append(self.fetch_post(
+                contact, start_pn,
+                start_pn + fetch_len if start_pn + fetch_len < total_page else total_page
+            ))
 
-        while total_page >= pn:
+        for _ in range(consumers_num):
+            tasks.append(self.save_post(contact))
+
+        await asyncio.gather(*tasks)
+
+    async def fetch_post(
+            self,
+            contact: ProducerConsumerContact,
+            start_pn: int,
+            end_pn: int,
+    ) -> None:
+        pn = start_pn
+
+        while end_pn > pn:
             posts = await get_posts(self.tid, pn)
             pn += 1
             if posts is None:
@@ -62,16 +61,7 @@ class PostService:
                 )
                 continue
 
-            if saved_thread_info is False:
-                saved_thread_info = True
-                self.thread_info = posts.thread
-                self.forum_info = posts.forum
-
             await contact.tasks_queue.put(posts)
-
-            new_total_page = posts.page.total_page
-            if new_total_page > total_page:
-                total_page = new_total_page
 
         contact.running_producers -= 1
         if contact.running_producers == 0:
@@ -153,6 +143,36 @@ class PostService:
             except asyncio.TimeoutError:
                 if contact.running_producers == 0:
                     return
+
+    async def save_post_from_floor1(self, post: Post):
+        if post.pid <= 0:
+            return
+
+        await self.user_service.register_user_from_post_user(post.user)
+
+        post_contents = await self.content_service.process_contents(
+            post.contents.objs,
+            ContentsAffiliation(),
+        )
+        self.post_dao.insert(
+            PostEntity(
+                post.pid,
+                post_contents,
+                post.floor,
+                post.author_id,
+                post.agree,
+                post.disagree,
+                post.create_time,
+                post.is_thread_author,
+                post.sign,
+                post.reply_num,
+                0,
+                0,
+            )
+        )
+        MsgPrinter.print_success(
+            "", "SavePost", ["floor", post.floor, "pid", post.pid]
+        )
 
     async def scrape_comments(
             self, ppid: int, floor: int, ppn: int, reply_num: int
@@ -286,11 +306,12 @@ class PostService:
                 if contact.running_producers == 0:
                     return
 
-    async def update_scrape_post(self):
+    async def update_scrape_post(self, total_page: int):
         pass
 
     async def update_post(self, contact: ProducerConsumerContact) -> None:
-        pass
+        # 获取 当前楼层最新回复的时间。
+        self.post_dao.query_latest_response_time_of_floor(1)
 
 
 # Comment 1 : 判断 pid 是否 <= 0 的注释。

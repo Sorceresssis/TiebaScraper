@@ -13,7 +13,7 @@ from pojo.producer_consumer_contact import ProducerConsumerContact
 from pojo.tieba_origin_src_entity import TiebaOriginSrcEntity
 from pojo.user_entity import UserEntity
 from pojo.user_status import UserStatus
-from scrape_config import DOWNLOAD_USER_AVATAR
+from scrape_config import DOWNLOAD_USER_AVATAR_MODE
 from utils.fs import download_file
 from utils.logger import generate_scrape_logger_msg
 from utils.msg_printer import MsgPrinter
@@ -96,7 +96,7 @@ class UserService:
     async def complete_user_info(self):
         self.user_cursor = self.user_dao.query()
         queue_maxsize = 10
-        producers_num = 10
+        producers_num = 15
         consumers_num = 10
         consumer_await_timeout = 8
         contact = ProducerConsumerContact(queue_maxsize, producers_num, consumers_num, consumer_await_timeout)
@@ -129,6 +129,7 @@ class UserService:
             # user与其他domain相关联的字段在其他domain保存时就已经保存到了数据库里
             user_entity.portrait = user_info.portrait
             user_entity.username = user_entity.username if user_info.user_name == "-" else user_info.user_name
+            user_entity.username = None if user_entity.username == "" else user_entity.username
             user_entity.nickname = user_info.nick_name_new or user_info.nick_name_old or ""
             user_entity.tieba_uid = user_info.tieba_uid or None
 
@@ -166,7 +167,7 @@ class UserService:
                 if user_entity is None:
                     return
 
-                if DOWNLOAD_USER_AVATAR != 0:
+                if DOWNLOAD_USER_AVATAR_MODE != 0:
                     user_entity.avatar = await self._save_user_avatar(
                         user_entity.id,
                         user_entity.portrait

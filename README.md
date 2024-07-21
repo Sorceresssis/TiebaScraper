@@ -8,14 +8,10 @@
 
 ## 注意事项
 
-1. 有时出现错误，是网络的问题，多试几次即可
+1. 有时第一次运行会出现连接错误，多试几次即可。
 2. 已经注销的用户保存的数据会有缺失。
 
-## 用法
-
-### 演示视频
-
-[Bilibili](https://www.bilibili.com/video/BV1uK3BeCENa)
+## 基本用法
 
 ### 安装依赖
 
@@ -25,12 +21,6 @@ python>=3.8
 
 ```powershell
 pip install -r requirements.txt
-```
-
-安装 aiotieba 库的最新开发版
-
-```powershell
-pip install --upgrade git+https://github.com/Starry-OvO/aiotieba.git@develop
 ```
 
 ### 配置 BDUSS
@@ -55,9 +45,9 @@ BDUSS 是一串由纯 ascii 字符组成的，长度为 192 的字符串
 
 ![1718142431342](./docs/assets/README/images/1718142431342.png)
 
-把复制到的值填写到 `src/tieba_property.py` 中。用 `""`包裹后赋值给 BDUSS 变量即可
+把复制到的值填写到 `/src/tieba_auth.py` 中。用 `""`包裹后赋值给 BDUSS 变量即可
 
-![1718141716625](./docs/assets/README/images/1718141716625.png)
+![1721379368283](./docs/assets/README/images/1721379368283.png)
 
 ### 获取帖子的 tid
 
@@ -65,30 +55,44 @@ tid 类似于帖子的身份证。你可以从帖子的 url 中获取到它
 
 例如 ：`https://tieba.baidu.com/p/8173224373?share=9105` 这个帖子的 tid 就是 `8173224373` , `?` 后面的文字都无关紧要。
 
-移动端可以通过分享帖子然后复制连接获取 url
+移动端可以通过分享帖子然后复制链接获取 url
 
 ### 开始抓取
 
-你可以直接在 `terminal` 输入 `python ./src/main.py` 运行程序, 然后根据提示输入相关信息即可
+方法一: 在 `terminal` 输入 `python ./src/main.py` 运行程序, 然后根据提示输入相关信息即可。适用任何编辑器。
 
-![1718142895195](./docs/assets/README/images/1718142895195.png)
+方法二: 打开 `/src/scrape.py` 点击侧边的运行按钮。
+
+![1721525837787](./docs/assets/README/images/1721525837787.png)
 
 等待抓取完成。数据保存在工作目录下的 `scraped_data` 文件夹里。
 
-![1718143141194](./docs/assets/README/images/1718143141194.png)
+下面测试(下载高清用户头像) `6071259325` : `【吧务贴】大B吧举报申诉楼` 。
 
-## 其他配置
+回复数量: `18377` 条，文件数量: `6,419` , 数据大小: `1.22GB (1,315,974,348 字节)` 。
+
+耗时 `4分26.29秒` 。
+
+![1721526660657](./docs/assets/README/images/1721526660657.png)
+
+## Docs
+
+[贴吧数据Note](./docs/tieba_data_notes.md)
+
+[贴吧官方错误说明](./docs/tieba_error_desc.md)
+
+[数据库 DDL](./docs/SQL/DDL.sql)
+
+## 爬取配置
+
+文件 `/src/scrape_config.py` 中保存了全部的爬取配置。
 
 ### 用户头像清晰度
 
-文件 `src/tieba_property.py` 中的 `DOWNLOAD_USER_AVATAR` 参数可以对用户的头像下载操作进行配置：
+`DOWNLOAD_USER_AVATAR_MODE` 可以配置用户头像下载模式：
 
 ```python
-# 0 不下载头像
-# 1为下载低清头像
-# 2为下载高清头像
-
-DOWNLOAD_USER_AVATAR = 2
+# 头像下载模式，0: 不下载头像, 1: 下载低清头像, 2: 下载高清头像
 ```
 
 **低清头像样例**
@@ -98,6 +102,12 @@ DOWNLOAD_USER_AVATAR = 2
 **高清头像样例**
 
 ![1720768116148](./docs/assets/README/images/1720768116148.jpg)
+
+### 是否保存转发贴
+
+`SCRAPE_SHARE_ORIGIN` 变量可以配置是否保存转发贴。
+
+如果是 `False` 就只保存转发贴的第一楼。
 
 ## 数据保存的目录结构
 
@@ -111,24 +121,25 @@ DOWNLOAD_USER_AVATAR = 2
 
 `timestamp` : 抓取时间戳
 
-`share_origin_tid` : 原始帖子的 tid(如果存在的话)
+`share_origin_tid` : 主贴的转发原帖的 tid(如果存在的话)
 
 ```powershell
 [${forum_name}吧][${main_tid}]${thread_title}_${timestamp}
     ├───scrape_info.json # 保存一些关于本次抓取的信息
-    ├───scrape.log  # 保存本次抓取的日志
     └───threads
         ├───${main_tid}
-        │   ├───forum_avatar # 保存吧的头像
-        │   ├───post_assets  # 保存帖子的媒体文件
+        │   ├───forum_avatar # 吧的头像
+        │   ├───post_assets  # 帖子的媒体文件
         │   │   ├───images
         │   │   ├───videos
         │   │   └───voices
-        │   ├───user_avatar # 保存用户的头像
-        │   ├───content.db # 保存帖子内容
-        │   ├───forum.json # 保存吧信息
-        │   └───thread.json # 保存帖子信息
-        └───${share_origin_tid} # 保存主贴的原帖子，如果存在的话
+        │   ├───user_avatar # 用户的头像
+        │   ├───content.db # 帖子内容
+        │   ├───forum.json # 吧信息
+        |   ├───scrape.log  # 抓取的日志
+        |   ├───thread.json # 帖子信息
+        │   └───update_${timestamp}.log # 更新日志
+        └───${share_origin_tid} # 主贴的转发原帖，如果存在的话
             ├───forum_avatar
             ├───post_assets
             │   ├───images
@@ -137,21 +148,15 @@ DOWNLOAD_USER_AVATAR = 2
             ├───user_avatar
             ├───content.db
             ├───forum.json
-            └───thread.json
+            ├───scrape.log
+            ├───thread.json
+            └───update_${timestamp}.log
 
 ```
-
-## Docs
-
-[贴吧内容 Note](./docs/note.md)
-
-贴吧官方的错误: [贴吧错误说明](./docs/tieba_error_desc.md)
-
-[数据库 DDL](./docs/SQL/DDL.sql)
 
 ## 鸣谢
 
 感谢这些项目作者的帮助。
 
--   [Starry-OvO/aiotieba: Asynchronous I/O Client for Baidu Tieba](https://github.com/Starry-OvO/aiotieba)
--   [n0099/tbclient.protobuf: 百度贴吧客户端 Protocol Buffers 定义文件合集](https://github.com/n0099/tbclient.protobuf)
+- [Starry-OvO/aiotieba: Asynchronous I/O Client for Baidu Tieba](https://github.com/Starry-OvO/aiotieba)
+- [n0099/tbclient.protobuf: 百度贴吧客户端 Protocol Buffers 定义文件合集](https://github.com/n0099/tbclient.protobuf)

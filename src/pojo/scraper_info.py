@@ -1,5 +1,6 @@
 import time
 from dataclasses import dataclass
+from typing import TypedDict
 
 from config.scraper_config import SCRAPER_VERSION
 
@@ -25,3 +26,10 @@ class ScraperInfo:
         self.create_time = int(time.time())
         self.update_times = []
         self.scraper_version = SCRAPER_VERSION
+
+
+class ScraperInfoDict(TypedDict):
+    main_thread: int
+    create_time: int
+    update_record: list[int]
+    scraper_version: str

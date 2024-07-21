@@ -1,6 +1,6 @@
 import aiofiles
 import orjson
-from aiotieba.api.get_posts._classdef import Thread_p
+from aiotieba.api.get_posts._classdef import Thread_p, ShareThread_pt
 
 from api.aiotieba_client import get_forum, get_forum_detail
 from container.container import Container
@@ -27,6 +27,7 @@ class ThreadService:
                 thread.tid,
                 thread.title,
                 thread.fid,
+                thread.fname,
                 thread.pid,
                 thread.author_id,
                 thread.type,
@@ -69,6 +70,53 @@ class ThreadService:
             )
         except Exception as e:
             MsgPrinter.print_error(str(e), "SaveThreadInfo", ["tid", thread.tid, "title", thread.title])
+
+    async def save_thread_from_share_origin(self, share_origin: ShareThread_pt) -> None:
+        try:
+            thread_info = ThreadInfo(
+                share_origin.tid,
+                share_origin.title,
+                share_origin.fid,
+                share_origin.title,  # title会改成 `原帖被删除`
+                0,
+                share_origin.author_id,
+                0,
+                False,
+                False,
+                VoteInfo(
+                    share_origin.vote_info.title,
+                    share_origin.vote_info.is_multi,
+                    share_origin.vote_info.total_vote,
+                    share_origin.vote_info.total_user,
+                    list(
+                        map(
+                            lambda x: VoteOption(x.text, x.vote_num),
+                            share_origin.vote_info.options,
+                        )
+                    ),
+                ), 0, 0, 0, 0, 0, 0, 0
+            )
+
+            async with aiofiles.open(
+                    self.scrape_data_path_builder.get_thread_info_path(self.tid),
+                    'w',
+                    encoding='utf-8'
+            ) as file:
+                await file.write(orjson.dumps(thread_info).decode("utf-8"))
+
+            MsgPrinter.print_success(
+                "主题帖信息保存成功",
+                "SaveThreadInfo-Incomplete(ShareOrigin)",
+                [
+                    "tid", share_origin.tid,
+                    "title", share_origin.title
+                ]
+            )
+        except Exception as e:
+            MsgPrinter.print_error(
+                str(e),
+                "SaveThreadInfo-Incomplete(ShareOrigin)",
+                ["tid", share_origin.tid, "title", share_origin.title])
 
     async def save_forum_info(self, fid: int):
         try:
