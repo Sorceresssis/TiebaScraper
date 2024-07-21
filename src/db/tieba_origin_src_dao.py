@@ -1,5 +1,5 @@
-from container import Container
-from entity.tieba_origin_src_entity import TiebaOriginSrcEntity
+from pojo.tieba_origin_src_entity import TiebaOriginSrcEntity
+from container.container import Container
 
 
 class TiebaOriginSrcDao:

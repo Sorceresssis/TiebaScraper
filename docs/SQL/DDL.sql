@@ -27,16 +27,18 @@ DROP TABLE IF EXISTS 'user';
 CREATE TABLE user
 (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    portrait   TEXT                 NOT NULL, -- portrait可以作为唯一的key，
+    portrait   TEXT    DEFAULT NULL NULL,     -- portrait可以作为唯一的key, 理论来讲不应该设置NULL的但是，要适配获取 FragAT 用户时数据请求不到的情况
     username   TEXT    DEFAULT NULL NULL,
-    nickname   TEXT                 NOT NULL, -- nick_name_new > nick_name > show_name > log_name
+    nickname   TEXT                 NOT NULL, -- nick_name_new > nickname_old
+    tieba_uid  INTEGER DEFAULT NULL NULL,-- get_userinfo()
+
+
     avatar     TEXT    DEFAULT NULL NULL,
     glevel     INTEGER DEFAULT 0    NOT NULL, -- 成长等级
     gender     INTEGER DEFAULT 0    NOT NULL, -- 0 unknown, 1 male, 2 female
     ip         TEXT    DEFAULT ''   NOT NULL,
     is_vip     BOOLEAN DEFAULT 0    NOT NULL, -- 是贵族
     is_god     BOOLEAN DEFAULT 0    NOT NULL, -- 是大神
-    tieba_uid  INTEGER DEFAULT NULL NULL,-- get_userinfo()
     age        FLOAT                NOT NULL,-- get_userinfo()
     sign       TEXT    DEFAULT ''   NOT NULL,-- get_userinfo() 小尾巴
     post_num   INTEGER DEFAULT 0    NOT NULL, -- get_userinfo()
@@ -50,7 +52,6 @@ CREATE TABLE user
     status     INTEGER DEFAULT 0    NOT NULL  -- 0 正常，1 注销
 );
 CREATE UNIQUE INDEX 'uk_user(portrait)' ON 'user' (portrait);
-CREATE UNIQUE INDEX 'uk_user(username)' ON 'user' (username);
 CREATE UNIQUE INDEX 'uk_user(tieba_uid)' ON 'user' (tieba_uid);
 
 

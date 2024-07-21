@@ -1,9 +1,10 @@
-import aiohttp
 import asyncio
-import orjson
-from typing import TypedDict, List
 from dataclasses import dataclass
+from typing import TypedDict, List
 from urllib.parse import urlparse, parse_qs
+
+import aiohttp
+import orjson
 
 
 @dataclass
@@ -35,15 +36,15 @@ class N0099TbmV1Posts(TypedDict):
 
 
 async def get_custom_emoticon_src(
-    tid: int,
-    pn: int,
-    pid: int,
-    floor: int,
-    content_idx: int,
+        tid: int,
+        pn: int,
+        pid: int,
+        floor: int,
+        content_idx: int,
 ):
     async with aiohttp.ClientSession() as session:
         async with session.get(
-            f"https://n0099.net/tbm/v1/client_tester.php?type=replies&tid={tid}&pn={pn}&client_version=12.62.1.0"
+                f"https://n0099.net/tbm/v1/client_tester.php?type=replies&tid={tid}&pn={pn}&client_version=12.62.1.0"
         ) as response:
             html = await response.text()
             resData: N0099TbmV1Posts = orjson.loads(html)

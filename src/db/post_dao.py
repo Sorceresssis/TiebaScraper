@@ -1,10 +1,15 @@
-from container import Container
-from entity.post_entity import PostEntity
+from container.container import Container
+from pojo.post_entity import PostEntity
 
 
 class PostDao:
     def __init__(self):
         self.db = Container.get_content_db()
+
+    def query_latest_response_time_of_floor(self, floor: int):
+        sql = """
+        """
+        self.db.execute(sql, )
 
     def insert(self, entity: PostEntity):
         sql = """

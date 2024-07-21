@@ -1,47 +1,50 @@
-from aiotieba.api.get_posts import UserInfo_p
+import asyncio
+
 from aiotieba.api.get_comments import UserInfo_c
-from net.aiotieba_client import get_user_info
-from config.constant_config import get_user_avatar_url
-from tieba_property import DOWNLOAD_USER_AVATAR
-from utils.fs import download_file
-from container import Container
-from dao.user_dao import UserDao
-from dao.tieba_origin_src_dao import TiebaOriginSrcDao
-from entity.user_entity import UserEntity
-from entity.tieba_origin_src_entity import TiebaOriginSrcEntity
+from aiotieba.api.get_posts import UserInfo_p
+
+from api.aiotieba_client import get_user_info
+from api.tieba_api import TiebaApi
+from container.container import Container
+from db.tieba_origin_src_dao import TiebaOriginSrcDao
+from db.user_dao import UserDao
 from pojo.content_frag import ContentFragType
+from pojo.producer_consumer_contact import ProducerConsumerContact
+from pojo.tieba_origin_src_entity import TiebaOriginSrcEntity
+from pojo.user_entity import UserEntity
 from pojo.user_status import UserStatus
+from scrape_config import DOWNLOAD_USER_AVATAR_MODE
+from utils.fs import download_file
+from utils.logger import generate_scrape_logger_msg
+from utils.msg_printer import MsgPrinter
 
 
 class UserService:
     def __init__(self):
-        self.scraped_path_constructor = Container.get_scraped_path_constructor()
+        self.tid = Container.get_tid()
+        self.scrape_data_path_builder = Container.get_scrape_data_path_builder()
+        self.scrape_logger = Container.get_scrape_logger()
         self.user_dao = UserDao()
         self.tieba_origin_src_dao = TiebaOriginSrcDao()
-        self.user_avatar_dir = self.scraped_path_constructor.get_user_avatar_dir(
-            Container.get_tid()
+        self.user_avatar_dir = self.scrape_data_path_builder.get_user_avatar_dir(
+            self.tid
         )
-        self.scrape_logger = Container.get_scrape_logger()
+        self.user_cursor = None
 
-    async def save_user_info_by_uip(self, user_info: UserInfo_p):
-        if self.user_dao.check_exists_by_id(user_info.user_id):
-            return
-        await self.save_user_info(
+    async def register_user_from_post_user(self, user_info: UserInfo_p):
+        await self.user_dao.insert(
             UserEntity(
                 user_info.user_id,
                 user_info.portrait,
                 user_info.user_name or None,
-                user_info.nick_name_new
-                or user_info.nick_name
-                or user_info.user_name
-                or "",
-                "",  # avatar
+                user_info.nick_name_new or "",
+                None,  # tieba_uid
+                None,  # avatar
                 user_info.glevel,
                 user_info.gender,
                 user_info.ip,
                 user_info.is_vip,
                 user_info.is_god,
-                None,  # tieba_uid
                 0,  # age
                 "",  # sign
                 0,  # post_num
@@ -55,27 +58,20 @@ class UserService:
             )
         )
 
-    async def save_user_info_by_uic(self, user_info: UserInfo_c):
-        # 查询用户是否已经保存
-        if self.user_dao.check_exists_by_id(user_info.user_id):
-            return
-
-        await self.save_user_info(
+    async def register_user_from_comment_user(self, user_info: UserInfo_c):
+        await self.user_dao.insert(
             UserEntity(
                 user_info.user_id,
                 user_info.portrait,
                 user_info.user_name or None,
-                user_info.nick_name_new
-                or user_info.nick_name
-                or user_info.user_name
-                or "",
-                "",  # avatar
+                user_info.nick_name_new or "",
+                None,  # tieba_uid
+                None,  # avatar
                 0,  # glevel
                 user_info.gender,
                 "",
                 user_info.is_vip,
                 user_info.is_god,
-                None,  # tieba_uid
                 0,  # age,
                 "",  # sign
                 0,  # post_num
@@ -89,106 +85,149 @@ class UserService:
             )
         )
 
-    async def save_user_info(self, user_entity: UserEntity):
-        # 有可能会请求失败, 重试2次，如果依然失败，判定为用户已经注销。
-        user_info = None
-        retry = 3
-        while user_info is None and retry:
-            user_info = await get_user_info(user_entity.id)
-            retry -= 1
+    async def register_user_from_at(self, user_id: int, nickname: str):
+        # AT 分块只有 user_id 和 nickname。
+        # 最终 nickname 以 get_user_info 获取的为准。
+        await self.user_dao.insert(UserEntity(user_id, None, None, nickname))
 
-        if user_info:
-            user_entity.glevel = user_info.glevel
-            user_entity.ip = user_info.ip
+    async def register_user_from_id(self, user_id):
+        await self.user_dao.insert(UserEntity(user_id))
+
+    async def complete_user_info(self):
+        self.user_cursor = self.user_dao.query()
+        queue_maxsize = 10
+        producers_num = 15
+        consumers_num = 10
+        consumer_await_timeout = 8
+        contact = ProducerConsumerContact(queue_maxsize, producers_num, consumers_num, consumer_await_timeout)
+
+        await asyncio.gather(*[self.fetch_user_info(contact) for _ in range(producers_num)],
+                             *[self.save_user_info(contact) for _ in range(consumers_num)])
+        self.user_cursor.close()
+
+    async def fetch_user_info(self, contact: ProducerConsumerContact) -> None:
+        while True:
+            user_tuple = self.fetchone_user_entity_from_cursor()
+            if user_tuple is None:
+                break
+
+            user_entity = self.user_dao.user_entity_factory_from_tuple(user_tuple)
+            user_info = await get_user_info(user_entity.id, user_entity.portrait)
+
+            if user_info is None:
+                user_entity.status = UserStatus.DEACTIVATED
+                self.scrape_logger.error(generate_scrape_logger_msg(
+                    "",
+                    "FetchUserInfo",
+                    [
+                        "id", user_entity.id,
+                        "portrait", user_entity.portrait
+                    ]))
+                await contact.tasks_queue.put(user_entity)
+                continue
+
+            # user与其他domain相关联的字段在其他domain保存时就已经保存到了数据库里
+            user_entity.portrait = user_info.portrait
+            user_entity.username = user_entity.username if user_info.user_name == "-" else user_info.user_name
+            user_entity.username = None if user_entity.username == "" else user_entity.username
+            user_entity.nickname = user_info.nick_name_new or user_info.nick_name_old or ""
             user_entity.tieba_uid = user_info.tieba_uid or None
+
+            user_entity.glevel = user_info.glevel
+            user_entity.gender = user_info.gender
             user_entity.age = user_info.age
-            user_entity.sign = user_info.sign
             user_entity.post_num = user_info.post_num
             user_entity.agree_num = user_info.agree_num
             user_entity.fan_num = user_info.fan_num
             user_entity.follow_num = user_info.follow_num
             user_entity.forum_num = user_info.forum_num
-        else:
-            # 如果用户已经注销不存在, 就会抛出异常
-            print(f"用户: {user_entity.id} 已注销。")
-            user_entity.status = UserStatus.DEACTIVATED
-            self.scrape_logger.warning(
-                f"用户: {user_entity.id} 已注销。portrait={user_entity.portrait}"
-            )
+            user_entity.sign = user_info.sign
+            user_entity.ip = user_info.ip
 
-        user_entity.avatar = self._save_user_avatar(
-            user_entity.id, user_entity.portrait
-        )
-        self.user_dao.insert(user_entity)
+            user_entity.is_vip = user_info.is_vip
+            user_entity.is_god = user_info.is_god
 
-    async def save_user_by_id(self, user_id: int):
-        # 查询用户是否已经保存
-        if self.user_dao.check_exists_by_id(user_id):
-            return
+            await contact.tasks_queue.put(user_entity)
 
-        user_info = None
-        retry = 3
-        while user_info is None and retry:
-            user_info = await get_user_info(user_id)
-            retry -= 1
+        # 让最后一个完成的生产者向生产者们发送停止信号，一定要是最后一个！
+        # 如果不是最后一个，当其他生产者在等待网络请求时，先完成的生产者会先把停止信号发送给消费者，导致消费者提前退出。
+        # 消费者没有消费完还在等待生产的商品就直接退出了.
+        contact.running_producers -= 1
+        if contact.running_producers == 0:
+            for _ in range(contact.consumers_num):
+                await contact.tasks_queue.put(None)
 
-        if not user_info:
-            return
-
-        user_entity = UserEntity(
-            user_info.user_id,
-            user_info.portrait,
-            user_info.user_name,
-            user_info.nick_name_new,
-            None,
-            user_info.glevel,
-            user_info.gender,
-            user_info.ip,
-            user_info.is_vip,
-            user_info.is_god,
-            user_info.tieba_uid,
-            user_info.age,
-            user_info.sign,
-            user_info.post_num,
-            user_info.agree_num,
-            user_info.fan_num,
-            user_info.follow_num,
-            user_info.forum_num,
-            0,
-            False,
-            UserStatus.ACTIVE,
-        )
-
-        user_entity.avatar = self._save_user_avatar(
-            user_entity.id, user_entity.portrait
-        )
-
-        self.user_dao.insert(user_entity)
-
-    # 有数据库操作，需要事务包裹
-    def _save_user_avatar(self, user_id: int, portrait: str) -> None | str:
-        if DOWNLOAD_USER_AVATAR == 0:
-            return None
-        else:
-            user_avatar_url = get_user_avatar_url(portrait)
-
+    async def save_user_info(self, contact: ProducerConsumerContact):
+        while True:
             try:
-                avatar_filename = download_file(
-                    user_avatar_url,
-                    self.user_avatar_dir,
-                    self.scraped_path_constructor.get_user_avatar_filename(user_id),
-                )[0]
+                user_entity: UserEntity = await asyncio.wait_for(
+                    contact.tasks_queue.get(), contact.consumer_await_timeout
+                )
 
-                # 写入tieba_origin_src表
-                self.tieba_origin_src_dao.insert(
-                    TiebaOriginSrcEntity(
-                        avatar_filename, ContentFragType.IMAGE, user_avatar_url
+                if user_entity is None:
+                    return
+
+                if DOWNLOAD_USER_AVATAR_MODE != 0:
+                    user_entity.avatar = await self._save_user_avatar(
+                        user_entity.id,
+                        user_entity.portrait
                     )
+                try:
+                    self.user_dao.update(user_entity)
+                    MsgPrinter.print_success(
+                        "",
+                        "SaveUserInfo",
+                        [
+                            "user_id", user_entity.id,
+                            "portrait", user_entity.portrait,
+                            "user_name", user_entity.username
+                        ]
+                    )
+                except Exception as e:
+                    MsgPrinter.print_error(
+                        str(e),
+                        "SaveUserInfo",
+                        [
+                            "user_id", user_entity.id,
+                            "portrait", user_entity.portrait,
+                            "user_name", user_entity.username
+                        ]
+                    )
+            except asyncio.TimeoutError:
+                if contact.running_producers == 0:
+                    return
+
+    async def _save_user_avatar(self, user_id: int, portrait: str) -> None | str:
+        if portrait is None:
+            return None
+
+        user_avatar_url = TiebaApi.get_user_avatar_url(portrait)
+
+        try:
+            avatar_filename = (await download_file(
+                user_avatar_url,
+                self.user_avatar_dir,
+                self.scrape_data_path_builder.get_user_avatar_filename(portrait)
+            ))[0]
+
+            self.tieba_origin_src_dao.insert(
+                TiebaOriginSrcEntity(avatar_filename, ContentFragType.IMAGE, user_avatar_url)
+            )
+            return avatar_filename
+        except Exception as e:
+            MsgPrinter.print_error(
+                str(e),
+                "SaveUserInfo-Avatar",
+                ["uid", user_id, "portrait", portrait]
+            )
+            self.scrape_logger.error(
+                generate_scrape_logger_msg(
+                    str(e),
+                    "SaveUserInfo-Avatar",
+                    ["uid", user_id, "portrait", portrait]
                 )
-                return avatar_filename
-            except Exception as e:
-                print(f"下载用户头像失败, user_id={user_id}, url={user_avatar_url}")
-                self.scrape_logger.error(
-                    f"下载用户头像失败, user_id={user_id}, url={user_avatar_url}, 错误描述:{e}"
-                )
-                return None
+            )
+            return None
+
+    def fetchone_user_entity_from_cursor(self) -> tuple | None:
+        return self.user_cursor.fetchone()
