@@ -164,3 +164,5 @@ cython_debug/
 .vscode/
 
 scraped_data
+tieba_auth.json
+scrape_config.json

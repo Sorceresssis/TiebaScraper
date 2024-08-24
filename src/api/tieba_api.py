@@ -1,12 +1,5 @@
-from enum import IntEnum
-
+from pojo.enums import DownloadUserAvatarModeType
 from scrape_config import DOWNLOAD_USER_AVATAR_MODE
-
-
-class DownloadUserAvatarModeType(IntEnum):
-    NONE = 0  # 不下载
-    LOW = 1  # 低清
-    HIGH = 2  # 高清
 
 
 def get_user_avatar_base_url() -> str:
@@ -29,6 +22,4 @@ class TiebaApi:
 
     @classmethod
     def get_voice_url(cls, voice_hash: str) -> str:
-        return (
-            f"https://tiebac.baidu.com/c/p/voice?voice_md5={voice_hash}&play_from=pb_voice_play"
-        )
+        return f"https://tiebac.baidu.com/c/p/voice?voice_md5={voice_hash}&play_from=pb_voice_play"

@@ -2,3 +2,4 @@ aiotieba>=4.4.6
 orjson>=3.10.3
 aiohttp>=3.9.5
 aiofiles>=24.1.0
+questionary>=2.0.1

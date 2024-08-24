@@ -11,11 +11,15 @@
 1. 有时第一次运行会出现连接错误，多试几次即可。
 2. 已经注销的用户保存的数据会有缺失。
 
+## TODO
+
+user_id 可以为 0. 碰到 0 赋值为 None 写入数据库。
+
 ## 基本用法
 
 ### 安装依赖
 
-python>=3.8
+python>=12.3
 
 下载并打开项目后，在终端中运行以下命令安装依赖
 
@@ -77,7 +81,7 @@ tid 类似于帖子的身份证。你可以从帖子的 url 中获取到它
 
 ## Docs
 
-[贴吧数据Note](./docs/tieba_data_notes.md)
+[贴吧数据 Note](./docs/tieba_data_notes.md)
 
 [贴吧官方错误说明](./docs/tieba_error_desc.md)
 
@@ -136,8 +140,8 @@ tid 类似于帖子的身份证。你可以从帖子的 url 中获取到它
         │   ├───user_avatar # 用户的头像
         │   ├───content.db # 帖子内容
         │   ├───forum.json # 吧信息
-        |   ├───scrape.log  # 抓取的日志
-        |   ├───thread.json # 帖子信息
+        │   ├───scrape.log  # 抓取的日志
+        │   ├───thread.json # 帖子信息
         │   └───update_${timestamp}.log # 更新日志
         └───${share_origin_tid} # 主贴的转发原帖，如果存在的话
             ├───forum_avatar
@@ -158,5 +162,5 @@ tid 类似于帖子的身份证。你可以从帖子的 url 中获取到它
 
 感谢这些项目作者的帮助。
 
-- [Starry-OvO/aiotieba: Asynchronous I/O Client for Baidu Tieba](https://github.com/Starry-OvO/aiotieba)
-- [n0099/tbclient.protobuf: 百度贴吧客户端 Protocol Buffers 定义文件合集](https://github.com/n0099/tbclient.protobuf)
+-   [Starry-OvO/aiotieba: Asynchronous I/O Client for Baidu Tieba](https://github.com/Starry-OvO/aiotieba)
+-   [n0099/tbclient.protobuf: 百度贴吧客户端 Protocol Buffers 定义文件合集](https://github.com/n0099/tbclient.protobuf)
