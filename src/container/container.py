@@ -16,9 +16,7 @@ class Container:
         return cls.scrape_data_path_builder
 
     @classmethod
-    def set_scrape_data_path_builder(
-            cls, scrape_data_path_builder: ScrapeDataPathBuilder
-    ) -> None:
+    def set_scrape_data_path_builder(cls, scrape_data_path_builder: ScrapeDataPathBuilder) -> None:
         cls.scrape_data_path_builder = scrape_data_path_builder
 
     @classmethod
@@ -39,17 +37,13 @@ class Container:
     @classmethod
     def get_scrape_logger(cls):
         if cls.scrape_logger is None:
-            cls.scrape_logger = ScrapeLogger(
-                cls.get_scrape_data_path_builder().get_scrape_log_path(cls.tid)
-            )
+            cls.scrape_logger = ScrapeLogger(cls.get_scrape_data_path_builder().get_scrape_log_path(cls.tid))
 
         return cls.scrape_logger
 
     @classmethod
     def get_content_db(cls) -> ContentDB:
         if cls.content_db is None:
-            cls.content_db = ContentDB(
-                cls.get_scrape_data_path_builder().get_content_db_path(cls.tid)
-            )
+            cls.content_db = ContentDB(cls.get_scrape_data_path_builder().get_content_db_path(cls.tid))
 
         return cls.content_db

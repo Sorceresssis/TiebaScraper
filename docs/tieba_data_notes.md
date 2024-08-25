@@ -6,11 +6,17 @@
 
 **user_id**
 
-一定不为空, 很重要的参数
+可能为空，上古ip用户没有user_id.
+
+user_id 可能不存在
+
+`https://github.com/Starry-OvO/aiotieba/issues/213#issuecomment-2241636224`
 
 **portrait**
 
 一定不为空, 很重要的参数。
+
+有多个版本。
 
 **username**
 
@@ -25,7 +31,30 @@ post 会保存一些关于用户的冗余字段。会保留一些被 `-` 代替�
 电话号码会被隐私处理: `133******37`
 
 ```json
-{"user_id":1371763488,"portrait":"tb.1.e67e027b.vYbye7MZFu33wtZGvHLLdg","user_name":"-","nick_name_new":"璐村惂鐢ㄦ埛_QA3J3KS馃惥","tieba_uid":0,"glevel":0,"gender":1,"age":9.9,"post_num":1304,"agree_num":0,"fan_num":29,"follow_num":15,"forum_num":108,"sign":"新生的BIGER","ip":"","icons":["wxshen","wxxian","wxyao"],"vimage":{"enabled":false,"state":""},"is_vip":false,"is_god":false,"is_blocked":false,"priv_like":3,"priv_reply":1}
+{
+    "user_id": 1371763488,
+    "portrait": "tb.1.e67e027b.vYbye7MZFu33wtZGvHLLdg",
+    "user_name": "-",
+    "nick_name_new": "璐村惂鐢ㄦ埛_QA3J3KS馃惥",
+    "tieba_uid": 0,
+    "glevel": 0,
+    "gender": 1,
+    "age": 9.9,
+    "post_num": 1304,
+    "agree_num": 0,
+    "fan_num": 29,
+    "follow_num": 15,
+    "forum_num": 108,
+    "sign": "新生的BIGER",
+    "ip": "",
+    "icons": ["wxshen", "wxxian", "wxyao"],
+    "vimage": { "enabled": false, "state": "" },
+    "is_vip": false,
+    "is_god": false,
+    "is_blocked": false,
+    "priv_like": 3,
+    "priv_reply": 1
+}
 ```
 
 2. 敏感字, 会被用 `-` 符号代替。
@@ -33,34 +62,147 @@ post 会保存一些关于用户的冗余字段。会保留一些被 `-` 代替�
 `你麻痹972`
 
 ```json
-{"user_id":1164702015,"portrait":"tb.1.8b4d3d91.a4jtPwNaT61v33tAzAFOTA","user_name":"-","nick_name_new":"贴吧用户_Q7Me34C","tieba_uid":0,"glevel":0,"gender":1,"age":9.2,"post_num":2612,"agree_num":6,"fan_num":85,"follow_num":12,"forum_num":9,"sign":"怪我咯。","ip":"","icons":[],"vimage":{"enabled":false,"state":""},"is_vip":false,"is_god":false,"is_blocked":false,"priv_like":3,"priv_reply":1}
+{
+    "user_id": 1164702015,
+    "portrait": "tb.1.8b4d3d91.a4jtPwNaT61v33tAzAFOTA",
+    "user_name": "-",
+    "nick_name_new": "贴吧用户_Q7Me34C",
+    "tieba_uid": 0,
+    "glevel": 0,
+    "gender": 1,
+    "age": 9.2,
+    "post_num": 2612,
+    "agree_num": 6,
+    "fan_num": 85,
+    "follow_num": 12,
+    "forum_num": 9,
+    "sign": "怪我咯。",
+    "ip": "",
+    "icons": [],
+    "vimage": { "enabled": false, "state": "" },
+    "is_vip": false,
+    "is_god": false,
+    "is_blocked": false,
+    "priv_like": 3,
+    "priv_reply": 1
+}
 ```
-
 
 `X1NPJ`
 
 ```json
-{"user_id":1604997478,"portrait":"tb.1.726db229.anu5OjnVZiPVETH8_E6VQg","user_name":"-","nick_name_new":"万志翔","tieba_uid":1134632183,"glevel":2,"gender":1,"age":9.4,"post_num":1233,"agree_num":715,"fan_num":0,"follow_num":0,"forum_num":0,"sign":"","ip":"内蒙古","icons":[],"vimage":{"enabled":false,"state":""},"is_vip":false,"is_god":false,"is_blocked":false,"priv_like":1,"priv_reply":1}
+{
+    "user_id": 1604997478,
+    "portrait": "tb.1.726db229.anu5OjnVZiPVETH8_E6VQg",
+    "user_name": "-",
+    "nick_name_new": "万志翔",
+    "tieba_uid": 1134632183,
+    "glevel": 2,
+    "gender": 1,
+    "age": 9.4,
+    "post_num": 1233,
+    "agree_num": 715,
+    "fan_num": 0,
+    "follow_num": 0,
+    "forum_num": 0,
+    "sign": "",
+    "ip": "内蒙古",
+    "icons": [],
+    "vimage": { "enabled": false, "state": "" },
+    "is_vip": false,
+    "is_god": false,
+    "is_blocked": false,
+    "priv_like": 1,
+    "priv_reply": 1
+}
 ```
 
 `贴吧用户_0002VDb🐾`
 
 ```json
-{"user_id":579507,"portrait":"tb.1.25502702.BrAM9CZAwzNgOWADvgm_JQ","user_name":"-","nick_name_new":"贴吧用户_0002VDb🐾","tieba_uid":10243430,"glevel":0,"gender":2,"age":19.9,"post_num":671826,"agree_num":948,"fan_num":48,"follow_num":0,"forum_num":216,"sign":"不同的人在用别搞混啦","ip":"","icons":[],"vimage":{"enabled":false,"state":""},"is_vip":false,"is_god":false,"is_blocked":false,"priv_like":3,"priv_reply":1}
+{
+    "user_id": 579507,
+    "portrait": "tb.1.25502702.BrAM9CZAwzNgOWADvgm_JQ",
+    "user_name": "-",
+    "nick_name_new": "贴吧用户_0002VDb🐾",
+    "tieba_uid": 10243430,
+    "glevel": 0,
+    "gender": 2,
+    "age": 19.9,
+    "post_num": 671826,
+    "agree_num": 948,
+    "fan_num": 48,
+    "follow_num": 0,
+    "forum_num": 216,
+    "sign": "不同的人在用别搞混啦",
+    "ip": "",
+    "icons": [],
+    "vimage": { "enabled": false, "state": "" },
+    "is_vip": false,
+    "is_god": false,
+    "is_blocked": false,
+    "priv_like": 3,
+    "priv_reply": 1
+}
 ```
 
 `百度用户#981758301`
 
 ```json
-{"user_id":811989719,"portrait":"tb.1.e1543ca9.sIAxKFosukK97_rHsI4fKw","user_name":"-","nick_name_new":"璐村惂鐢ㄦ埛_0EJ1yMe馃惥","tieba_uid":0,"glevel":0,"gender":1,"age":11.5,"post_num":2768,"agree_num":2,"fan_num":47,"follow_num":57,"forum_num":28,"sign":"大爱六六","ip":"","icons":[],"vimage":{"enabled":false,"state":""},"is_vip":false,"is_god":false,"is_blocked":false,"priv_like":2,"priv_reply":1}
+{
+    "user_id": 811989719,
+    "portrait": "tb.1.e1543ca9.sIAxKFosukK97_rHsI4fKw",
+    "user_name": "-",
+    "nick_name_new": "璐村惂鐢ㄦ埛_0EJ1yMe馃惥",
+    "tieba_uid": 0,
+    "glevel": 0,
+    "gender": 1,
+    "age": 11.5,
+    "post_num": 2768,
+    "agree_num": 2,
+    "fan_num": 47,
+    "follow_num": 57,
+    "forum_num": 28,
+    "sign": "大爱六六",
+    "ip": "",
+    "icons": [],
+    "vimage": { "enabled": false, "state": "" },
+    "is_vip": false,
+    "is_god": false,
+    "is_blocked": false,
+    "priv_like": 2,
+    "priv_reply": 1
+}
 ```
 
 `贴吧用户_06y9CQW`
 
 ```json
-{"user_id":568818738,"portrait":"tb.1.66a5b431.2vB54rBhK3J7pvxZ2Mc3ng","user_name":"-","nick_name_new":"贴吧用户_06y9CQW","tieba_uid":37499515,"glevel":0,"gender":1,"age":12.5,"post_num":3665,"agree_num":15,"fan_num":43,"follow_num":134,"forum_num":17,"sign":"我就是我，不是五毛一盒的烟火，，，，，","ip":"安徽","icons":[],"vimage":{"enabled":false,"state":""},"is_vip":false,"is_god":false,"is_blocked":false,"priv_like":3,"priv_reply":1}
+{
+    "user_id": 568818738,
+    "portrait": "tb.1.66a5b431.2vB54rBhK3J7pvxZ2Mc3ng",
+    "user_name": "-",
+    "nick_name_new": "贴吧用户_06y9CQW",
+    "tieba_uid": 37499515,
+    "glevel": 0,
+    "gender": 1,
+    "age": 12.5,
+    "post_num": 3665,
+    "agree_num": 15,
+    "fan_num": 43,
+    "follow_num": 134,
+    "forum_num": 17,
+    "sign": "我就是我，不是五毛一盒的烟火，，，，，",
+    "ip": "安徽",
+    "icons": [],
+    "vimage": { "enabled": false, "state": "" },
+    "is_vip": false,
+    "is_god": false,
+    "is_blocked": false,
+    "priv_like": 3,
+    "priv_reply": 1
+}
 ```
-
 
 **tieba_uid**
 
@@ -161,13 +303,39 @@ https://tiebac.baidu.com/c/p/voice?voice_md5=$voice_md5&play_from=pb_voice_play
 
 ### AT 分块
 
-at 分块显示的文字是用户当时的 nickname. 不是username.
+at 分块显示的文字是用户当时的 nickname. 不是 username.
 
 ```python
 FragAT(
     text='$nickname',
     user_id=0
 )
+```
+
+### Emoji
+
+```csharp
+  const emoticonsIndex = {
+        image_emoticon: { class: 'client', ext: 'png' }, // 泡泡(<51)/客户端新版表情(>61)
+        // image_emoticon: { class: 'face', ext: 'gif', prefix: 'i_f' }, // 旧版泡泡
+        'image_emoticon>51': { class: 'face', ext: 'gif', prefix: 'i_f' }, // 泡泡-贴吧十周年(51>=i<=61)
+        bearchildren_: { class: 'bearchildren', ext: 'gif' }, // 贴吧熊孩子
+        tiexing_: { class: 'tiexing', ext: 'gif' }, // 痒小贱
+        ali_: { class: 'ali', ext: 'gif' }, // 阿狸
+        llb_: { class: 'luoluobu', ext: 'gif' }, // 罗罗布
+        b: { class: 'qpx_n', ext: 'gif' }, // 气泡熊
+        xyj_: { class: 'xyj', ext: 'gif' }, // 小幺鸡
+        ltn_: { class: 'lt', ext: 'gif' }, // 冷兔
+        bfmn_: { class: 'bfmn', ext: 'gif' }, // 白发魔女
+        pczxh_: { class: 'zxh', ext: 'gif' }, // 张小盒
+        t_: { class: 'tsj', ext: 'gif' }, // 兔斯基
+        wdj_: { class: 'wdj', ext: 'png' }, // 豌豆荚
+        lxs_: { class: 'lxs', ext: 'gif' }, // 冷先森
+        B_: { class: 'bobo', ext: 'gif' }, // 波波
+        yz_: { class: 'shadow', ext: 'gif' }, // 影子
+        w_: { class: 'ldw', ext: 'gif' }, // 绿豆蛙
+        '10th_': { class: '10th', ext: 'gif' } // 贴吧十周年
+    } as const;
 ```
 
 ## Post
