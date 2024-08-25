@@ -13,7 +13,7 @@ from pojo.producer_consumer_contact import ProducerConsumerContact
 from pojo.tieba_origin_src_entity import TiebaOriginSrcEntity
 from pojo.user_entity import UserEntity
 from pojo.user_status import UserStatus
-from scrape_config import DOWNLOAD_USER_AVATAR_MODE
+from scrape_config import ScrapeConfig
 from utils.fs import download_file
 from utils.logger import generate_scrape_logger_msg
 from utils.msg_printer import MsgPrinter
@@ -26,12 +26,12 @@ class UserService:
         self.scrape_logger = Container.get_scrape_logger()
         self.user_dao = UserDao()
         self.tieba_origin_src_dao = TiebaOriginSrcDao()
-        self.user_avatar_dir = self.scrape_data_path_builder.get_user_avatar_dir(
-            self.tid
-        )
+        self.user_avatar_dir = self.scrape_data_path_builder.get_user_avatar_dir(self.tid)
         self.user_cursor = None
 
     async def register_user_from_post_user(self, user_info: UserInfo_p):
+        if not user_info.user_id:
+            return
         await self.user_dao.insert(
             UserEntity(
                 user_info.user_id,
@@ -59,6 +59,8 @@ class UserService:
         )
 
     async def register_user_from_comment_user(self, user_info: UserInfo_c):
+        if not user_info.user_id:
+            return
         await self.user_dao.insert(
             UserEntity(
                 user_info.user_id,
@@ -86,11 +88,15 @@ class UserService:
         )
 
     async def register_user_from_at(self, user_id: int, nickname: str):
+        if not user_id:
+            return
         # AT 分块只有 user_id 和 nickname。
         # 最终 nickname 以 get_user_info 获取的为准。
         await self.user_dao.insert(UserEntity(user_id, None, None, nickname))
 
     async def register_user_from_id(self, user_id):
+        if not user_id:
+            return
         await self.user_dao.insert(UserEntity(user_id))
 
     async def complete_user_info(self):
@@ -101,8 +107,10 @@ class UserService:
         consumer_await_timeout = 8
         contact = ProducerConsumerContact(queue_maxsize, producers_num, consumers_num, consumer_await_timeout)
 
-        await asyncio.gather(*[self.fetch_user_info(contact) for _ in range(producers_num)],
-                             *[self.save_user_info(contact) for _ in range(consumers_num)])
+        await asyncio.gather(
+            *[self.fetch_user_info(contact) for _ in range(producers_num)],
+            *[self.save_user_info(contact) for _ in range(consumers_num)]
+        )
         self.user_cursor.close()
 
     async def fetch_user_info(self, contact: ProducerConsumerContact) -> None:
@@ -116,13 +124,11 @@ class UserService:
 
             if user_info is None:
                 user_entity.status = UserStatus.DEACTIVATED
-                self.scrape_logger.error(generate_scrape_logger_msg(
-                    "",
-                    "FetchUserInfo",
-                    [
-                        "id", user_entity.id,
-                        "portrait", user_entity.portrait
-                    ]))
+                self.scrape_logger.error(
+                    generate_scrape_logger_msg(
+                        "", "FetchUserInfo", ["id", user_entity.id, "portrait", user_entity.portrait]
+                    )
+                )
                 await contact.tasks_queue.put(user_entity)
                 continue
 
@@ -167,31 +173,34 @@ class UserService:
                 if user_entity is None:
                     return
 
-                if DOWNLOAD_USER_AVATAR_MODE != 0:
-                    user_entity.avatar = await self._save_user_avatar(
-                        user_entity.id,
-                        user_entity.portrait
-                    )
+                if ScrapeConfig.DOWNLOAD_USER_AVATAR_MODE != 0:
+                    user_entity.avatar = await self._save_user_avatar(user_entity.id, user_entity.portrait)
                 try:
                     self.user_dao.update(user_entity)
                     MsgPrinter.print_success(
                         "",
                         "SaveUserInfo",
                         [
-                            "user_id", user_entity.id,
-                            "portrait", user_entity.portrait,
-                            "user_name", user_entity.username
-                        ]
+                            "user_id",
+                            user_entity.id,
+                            "portrait",
+                            user_entity.portrait,
+                            "user_name",
+                            user_entity.username,
+                        ],
                     )
                 except Exception as e:
                     MsgPrinter.print_error(
                         str(e),
                         "SaveUserInfo",
                         [
-                            "user_id", user_entity.id,
-                            "portrait", user_entity.portrait,
-                            "user_name", user_entity.username
-                        ]
+                            "user_id",
+                            user_entity.id,
+                            "portrait",
+                            user_entity.portrait,
+                            "user_name",
+                            user_entity.username,
+                        ],
                     )
             except asyncio.TimeoutError:
                 if contact.running_producers == 0:
@@ -204,27 +213,23 @@ class UserService:
         user_avatar_url = TiebaApi.get_user_avatar_url(portrait)
 
         try:
-            avatar_filename = (await download_file(
-                user_avatar_url,
-                self.user_avatar_dir,
-                self.scrape_data_path_builder.get_user_avatar_filename(portrait)
-            ))[0]
+            avatar_filename = (
+                await download_file(
+                    user_avatar_url,
+                    self.user_avatar_dir,
+                    self.scrape_data_path_builder.get_user_avatar_filename(portrait),
+                )
+            )[0]
 
             self.tieba_origin_src_dao.insert(
                 TiebaOriginSrcEntity(avatar_filename, ContentFragType.IMAGE, user_avatar_url)
             )
             return avatar_filename
         except Exception as e:
-            MsgPrinter.print_error(
-                str(e),
-                "SaveUserInfo-Avatar",
-                ["uid", user_id, "portrait", portrait]
-            )
+            MsgPrinter.print_error(str(e), "SaveUserInfo-Avatar", ["uid", user_id, "portrait", portrait])
             self.scrape_logger.error(
                 generate_scrape_logger_msg(
-                    str(e),
-                    "SaveUserInfo-Avatar",
-                    ["uid", user_id, "portrait", portrait]
+                    str(e), "SaveUserInfo-Avatar", ["uid", user_id, "portrait", portrait]
                 )
             )
             return None

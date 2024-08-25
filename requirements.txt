@@ -1,4 +1,4 @@
-aiotieba>=4.4.6
+aiotieba>=4.4.8
 orjson>=3.10.3
 aiohttp>=3.9.5
 aiofiles>=24.1.0

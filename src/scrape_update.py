@@ -8,11 +8,9 @@
 import asyncio
 
 from modules.scrape_update_module import scrape_update
-from initial_checks import initial_checks
 
 
 def main():
-    initial_checks()
     path = input("请输入本地帖子数据的路径: ")
     asyncio.run(scrape_update(path))
 

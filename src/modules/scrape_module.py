@@ -8,7 +8,7 @@ from api.aiotieba_client import get_posts
 from config.path_config import ScrapeDataPathBuilder
 from container.container import Container
 from pojo.scraper_info import ScraperInfo
-from scrape_config import SCRAPE_SHARE_ORIGIN
+from scrape_config import ScrapeConfig
 from services.post_service import PostService
 from services.thread_service import ThreadService
 from services.user_service import UserService
@@ -41,29 +41,21 @@ async def scrape(tid: int):
     Container.set_scrape_data_path_builder(scrape_data_path_builder)
 
     # ScraperInfo
-    with open(
-        scrape_data_path_builder.get_scrape_info_path(), "w", encoding="utf-8"
-    ) as file:
+    with open(scrape_data_path_builder.get_scrape_info_path(), "w", encoding="utf-8") as file:
         file.write(orjson.dumps(ScraperInfo(tid)).decode("utf-8"))
 
     scraping_tid: int = tid
     is_scraping_share_origin: bool = False
     share_origin = None
     while scraping_tid != 0:
-        os.makedirs(
-            scrape_data_path_builder.get_thread_dir(scraping_tid), exist_ok=True
-        )
+        os.makedirs(scrape_data_path_builder.get_thread_dir(scraping_tid), exist_ok=True)
 
         Container.set_tid(scraping_tid)
         content_db = Container.get_content_db()
         scrape_logger = Container.get_scrape_logger()
 
         MsgPrinter.print_step_mark("开始爬取帖子", ["tid", scraping_tid])
-        scrape_logger.info(
-            generate_scrape_logger_msg(
-                "开始爬取帖子", "StepMark", ["tid", scraping_tid]
-            )
-        )
+        scrape_logger.info(generate_scrape_logger_msg("开始爬取帖子", "StepMark", ["tid", scraping_tid]))
 
         posts = await get_posts(scraping_tid, 1)
 
@@ -90,7 +82,7 @@ async def scrape(tid: int):
             thread_ps = posts.thread
 
             # posts 和 comments
-            if is_scraping_share_origin and (not SCRAPE_SHARE_ORIGIN):
+            if is_scraping_share_origin and (not ScrapeConfig.SCRAPE_SHARE_ORIGIN):
                 # 如果不爬取原题，就只保存原帖的 第一楼。
                 MsgPrinter.print_step_mark(
                     "当前配置为禁止保存转发原帖，所以只保存原帖的第一楼。",
@@ -112,19 +104,13 @@ async def scrape(tid: int):
             # 集中完善用户数据
             MsgPrinter.print_step_mark("正在集中完善用户数据", ["tid", scraping_tid])
             scrape_logger.info(
-                generate_scrape_logger_msg(
-                    "正在集中完善用户数据", "StepMark", ["tid", scraping_tid]
-                )
+                generate_scrape_logger_msg("正在集中完善用户数据", "StepMark", ["tid", scraping_tid])
             )
             await user_service.complete_user_info()
 
         content_db.close()
         MsgPrinter.print_step_mark("帖子爬取完成", ["tid", scraping_tid])
-        scrape_logger.info(
-            generate_scrape_logger_msg(
-                "帖子爬取完成", "StepMark", ["tid", scraping_tid]
-            )
-        )
+        scrape_logger.info(generate_scrape_logger_msg("帖子爬取完成", "StepMark", ["tid", scraping_tid]))
 
         if posts is None:
             scraping_tid = 0
