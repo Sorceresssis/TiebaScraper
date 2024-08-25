@@ -1,13 +1,69 @@
 import asyncio
+import os
+import sys
 
+import orjson
 import questionary
 
 from modules.scrape_module import scrape
 from pojo.enums import ProgramFeatures
+from scrape_config import ScrapeConfig
+from tieba_auth import TiebaAuth
 from utils.msg_printer import PrintColor
-import os
 
-import orjson
+TIEBA_AUTH_FILENAME = "tieba_auth.json"
+SCRAPE_CONFIG_FILENAME = "scrape_config.json"
+
+
+def read_tieba_auth() -> None:
+    tieba_auth_file_path = os.path.join(os.getcwd(), TIEBA_AUTH_FILENAME)
+
+    try:
+        with open(tieba_auth_file_path, "r", encoding="utf-8") as f:
+            TiebaAuth.from_dict(orjson.loads(f.read()))
+    except Exception:
+        BDUSS = questionary.text("未配置BDUSS, 请输入: ").ask()
+        TiebaAuth.BDUSS = BDUSS
+        with open(tieba_auth_file_path, "w", encoding="utf-8") as f:
+            f.write(
+                orjson.dumps(
+                    TiebaAuth(),
+                    option=orjson.OPT_INDENT_2,
+                ).decode("utf-8")
+            )
+
+
+def read_scrape_config() -> None:
+    scrape_config_file_path = os.path.join(os.getcwd(), SCRAPE_CONFIG_FILENAME)
+
+    try:
+        with open(scrape_config_file_path, "r", encoding="utf-8") as f:
+            ScrapeConfig.from_dict(orjson.loads(f.read()))
+    except FileNotFoundError:
+        if questionary.confirm("未找到配置文件, 是否使用默认配置并生成文件?").ask():
+            write_scrape_config(scrape_config_file_path)
+        else:
+            sys.exit()
+    except orjson.JSONDecodeError:
+        if questionary.confirm("配置文件格式错误导致解析失败, 是否使用默认配置并生成文件?").ask():
+            write_scrape_config(scrape_config_file_path)
+        else:
+            sys.exit()
+    except ValueError as err:
+        if questionary.confirm(f"配置变量错误: {str(err)}, 是否使用默认配置并生成文件?").ask():
+            write_scrape_config(scrape_config_file_path)
+        else:
+            sys.exit()
+
+
+def write_scrape_config(path: str) -> None:
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(
+            orjson.dumps(
+                ScrapeConfig(),
+                option=orjson.OPT_INDENT_2,
+            ).decode("utf-8")
+        )
 
 
 features_choices = [
@@ -31,6 +87,8 @@ def main():
         selected_features = questionary.select("选择功能", choices=features_choices).ask()
 
         if selected_features == ProgramFeatures.SCRAPE:
+            read_tieba_auth()
+            read_scrape_config()
             tid = int(questionary.text("请输入要爬取的帖子的tid: ").ask())
             asyncio.run(scrape(tid))
         elif selected_features == ProgramFeatures.SCRAPE_UPDATE:
@@ -45,47 +103,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-TIEBA_AUTH_FILENAME = "tieba_auth.json"
-SCRAPE_CONFIG_FILENAME = "scrape_config.json"
-
-
-def read_tieba_auth():
-    tieba_auth_file_path = os.path.join(os.getcwd(), TIEBA_AUTH_FILENAME)
-
-    try:
-        with open(tieba_auth_file_path, "r", encoding="utf-8") as f:
-            user_tieba_auth = TiebaAuth.from_dict(orjson.loads(f.read()))
-    except Exception:
-        BDUSS = input("BDUSS 未找到，请输入 BDUSS: ")
-        user_tieba_auth = get_tieba_auth()
-        with open(tieba_auth_file_path, "w", encoding="utf-8") as f:
-            f.write(
-                orjson.dumps(
-                    user_tieba_auth,
-                    option=orjson.OPT_INDENT_2,
-                ).decode("utf-8")
-            )
-
-    return user_tieba_auth
-
-
-def read_scrape_config() -> ScrapeConfig:
-    scrape_config_file_path = os.path.join(os.getcwd(), SCRAPE_CONFIG_FILENAME)
-
-    user_scrape_config: ScrapeConfig
-    try:
-        with open(scrape_config_file_path, "r", encoding="utf-8") as f:
-            user_scrape_config = ScrapeConfig.from_dict(orjson.loads(f.read()))
-    except:
-        user_scrape_config = get_scrape_config()
-
-        with open(scrape_config_file_path, "w", encoding="utf-8") as f:
-            f.write(
-                orjson.dumps(
-                    user_scrape_config,
-                    option=orjson.OPT_INDENT_2,
-                ).decode("utf-8")
-            )
-    return user_scrape_config

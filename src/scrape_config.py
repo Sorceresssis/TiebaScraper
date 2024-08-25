@@ -18,15 +18,15 @@ class ScrapeConfig:
     def from_dict(cls, data: Dict[str, Any]) -> None:
         download_user_avatar_mode = data.get("DOWNLOAD_USER_AVATAR_MODE", 2)
         if download_user_avatar_mode not in DownloadUserAvatarModeType:
-            raise Exception("DOWNLOAD_USER_AVATAR_MODE 配置错误")
+            raise ValueError("DOWNLOAD_USER_AVATAR_MODE 的值必须是 0, 1, 2 中的一个")
         cls.DOWNLOAD_USER_AVATAR_MODE = download_user_avatar_mode
 
         scrape_share_origin = data.get("SCRAPE_SHARE_ORIGIN", True)
         if scrape_share_origin not in [True, False]:
-            raise Exception("SCRAPE_SHARE_ORIGIN 配置错误")
+            raise ValueError("SCRAPE_SHARE_ORIGIN 的值必须是 True 或 False")
         cls.SCRAPE_SHARE_ORIGIN = scrape_share_origin
 
         update_forum_avatar_on_update = data.get("UPDATE_FORUM_AVATAR_ON_UPDATE", True)
         if update_forum_avatar_on_update not in [True, False]:
-            raise Exception("UPDATE_FORUM_AVATAR_ON_UPDATE 配置错误")
+            raise ValueError("UPDATE_FORUM_AVATAR_ON_UPDATE 的值必须是 True 或 False")
         cls.UPDATE_FORUM_AVATAR_ON_UPDATE = update_forum_avatar_on_update

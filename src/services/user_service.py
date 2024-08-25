@@ -17,6 +17,7 @@ from scrape_config import ScrapeConfig
 from utils.fs import download_file
 from utils.logger import generate_scrape_logger_msg
 from utils.msg_printer import MsgPrinter
+from pojo.enums import DownloadUserAvatarModeType
 
 
 class UserService:
@@ -173,7 +174,7 @@ class UserService:
                 if user_entity is None:
                     return
 
-                if ScrapeConfig.DOWNLOAD_USER_AVATAR_MODE != 0:
+                if ScrapeConfig.DOWNLOAD_USER_AVATAR_MODE != DownloadUserAvatarModeType.NONE:
                     user_entity.avatar = await self._save_user_avatar(user_entity.id, user_entity.portrait)
                 try:
                     self.user_dao.update(user_entity)
@@ -206,9 +207,9 @@ class UserService:
                 if contact.running_producers == 0:
                     return
 
-    async def _save_user_avatar(self, user_id: int, portrait: str) -> None | str:
+    async def _save_user_avatar(self, user_id: int, portrait: str | None) -> None | str:
         if portrait is None:
-            return None
+            return
 
         user_avatar_url = TiebaApi.get_user_avatar_url(portrait)
 
