@@ -24,20 +24,23 @@ class PostService:
 
     async def scrape_post(self, total_page: int):
         queue_maxsize = 10
-        producers_num = total_page if total_page < 3 else 3
+        max_producers_num = 3
+        producers_num = min(max_producers_num, total_page)
         consumers_num = 8
         consumer_await_timeout = 8
         contact = ProducerConsumerContact(queue_maxsize, producers_num, consumers_num, consumer_await_timeout)
 
-        fetch_len = math.ceil(total_page / producers_num)
-        total_page += 1  # 前闭后开
-        tasks = []
+        pages_per_producer = math.ceil(total_page / producers_num)
 
-        for start_pn in range(1, total_page, fetch_len):
-            tasks.append(self.fetch_post(
-                contact, start_pn,
-                start_pn + fetch_len if start_pn + fetch_len < total_page else total_page
-            ))
+        tasks = []
+        start_pn = 1
+        for i in range(producers_num):
+            end_pn = start_pn + pages_per_producer - 1
+            if i == producers_num - 1:
+                end_pn = total_page
+
+            tasks.append(self.fetch_post(contact, start_pn, end_pn))
+            start_pn = end_pn + 1
 
         for _ in range(consumers_num):
             tasks.append(self.save_post(contact))
@@ -45,24 +48,23 @@ class PostService:
         await asyncio.gather(*tasks)
 
     async def fetch_post(
-            self,
-            contact: ProducerConsumerContact,
-            start_pn: int,
-            end_pn: int,
+        self,
+        contact: ProducerConsumerContact,
+        start_pn: int,
+        end_pn: int,
     ) -> None:
         pn = start_pn
 
-        while end_pn > pn:
+        while pn <= end_pn:
             posts = await get_posts(self.tid, pn)
             pn += 1
             if posts is None:
-                self.scrape_logger.error(
-                    generate_scrape_logger_msg("请求失败", "FetchPosts", ["pn", pn])
-                )
+                self.scrape_logger.error(generate_scrape_logger_msg("请求失败", "FetchPosts", ["pn", pn]))
                 continue
 
             await contact.tasks_queue.put(posts)
 
+        print(f"producer {contact.producers_num} fetch_post end")
         contact.running_producers -= 1
         if contact.running_producers == 0:
             for _ in range(contact.consumers_num):
@@ -88,9 +90,7 @@ class PostService:
 
                         post_contents = await self.content_service.process_contents(
                             post.contents.objs,
-                            ContentsAffiliation(
-                                posts.page.current_page, post.pid, post.floor
-                            ),
+                            ContentsAffiliation(posts.page.current_page, post.pid, post.floor),
                         )
                         self.post_dao.insert(
                             PostEntity(
@@ -108,9 +108,7 @@ class PostService:
                                 0,
                             )
                         )
-                        MsgPrinter.print_success(
-                            "", "SavePost", ["floor", post.floor, "pid", post.pid]
-                        )
+                        MsgPrinter.print_success("", "SavePost", ["floor", post.floor, "pid", post.pid])
 
                         if len(post.comments) == 0:
                             continue
@@ -127,19 +125,28 @@ class PostService:
                             str(e),
                             "SavePost",
                             [
-                                "floor", post.floor,
-                                "pid", post.pid,
-                                "pn", posts.page.current_page,
+                                "floor",
+                                post.floor,
+                                "pid",
+                                post.pid,
+                                "pn",
+                                posts.page.current_page,
                             ],
                         )
-                        self.scrape_logger.error(generate_scrape_logger_msg(
-                            str(e),
-                            "SavePost",
-                            [
-                                "floor", post.floor,
-                                "pid", post.pid,
-                                "pn", posts.page.current_page,
-                            ]))
+                        self.scrape_logger.error(
+                            generate_scrape_logger_msg(
+                                str(e),
+                                "SavePost",
+                                [
+                                    "floor",
+                                    post.floor,
+                                    "pid",
+                                    post.pid,
+                                    "pn",
+                                    posts.page.current_page,
+                                ],
+                            )
+                        )
             except asyncio.TimeoutError:
                 if contact.running_producers == 0:
                     return
@@ -170,13 +177,9 @@ class PostService:
                 0,
             )
         )
-        MsgPrinter.print_success(
-            "", "SavePost", ["floor", post.floor, "pid", post.pid]
-        )
+        MsgPrinter.print_success("", "SavePost", ["floor", post.floor, "pid", post.pid])
 
-    async def scrape_comments(
-            self, ppid: int, floor: int, ppn: int, reply_num: int
-    ) -> None:
+    async def scrape_comments(self, ppid: int, floor: int, ppn: int, reply_num: int) -> None:
         queue_maxsize = 8 if reply_num > 8 else reply_num
         producers_num = 1
         consumers_num = queue_maxsize
@@ -188,9 +191,7 @@ class PostService:
             *[self.save_comments(contact, ppn) for _ in range(consumers_num)],
         )
 
-    async def fetch_comments(
-            self, contact: ProducerConsumerContact, ppid: int, floor: int
-    ):
+    async def fetch_comments(self, contact: ProducerConsumerContact, ppid: int, floor: int):
         pn = 1
         total_page = pn
 
@@ -230,9 +231,7 @@ class PostService:
 
                 for comment in comments.objs:
                     try:
-                        await self.user_service.register_user_from_comment_user(
-                            comment.user
-                        )
+                        await self.user_service.register_user_from_comment_user(comment.user)
                         # 之前想被回复者一定回出现在楼中楼里，所以没有去把回复者插入数据
                         # 但是可能回出现被回复在删除自己回复的情况所以这里也要执行insert操作
                         if comment.reply_to_id != 0:
@@ -270,11 +269,16 @@ class PostService:
                             "",
                             "SaveComment",
                             [
-                                "floor", comment.floor,
-                                "pid", comment.pid,
-                                "pn", comments.page.current_page,
-                                "ppid", comment.ppid,
-                                "ppn", ppn,
+                                "floor",
+                                comment.floor,
+                                "pid",
+                                comment.pid,
+                                "pn",
+                                comments.page.current_page,
+                                "ppid",
+                                comment.ppid,
+                                "ppn",
+                                ppn,
                             ],
                         )
                     except Exception as e:
@@ -282,11 +286,16 @@ class PostService:
                             str(e),
                             "SaveComment",
                             [
-                                "floor", comment.floor,
-                                "pid", comment.pid,
-                                "pn", comments.page.current_page,
-                                "ppid", comment.ppid,
-                                "ppn", ppn,
+                                "floor",
+                                comment.floor,
+                                "pid",
+                                comment.pid,
+                                "pn",
+                                comments.page.current_page,
+                                "ppid",
+                                comment.ppid,
+                                "ppn",
+                                ppn,
                             ],
                         )
                         self.scrape_logger.error(
@@ -294,11 +303,16 @@ class PostService:
                                 "保存失败",
                                 "SaveComment",
                                 [
-                                    "floor", comment.floor,
-                                    "pid", comment.pid,
-                                    "pn", comments.page.current_page,
-                                    "ppid", comment.ppid,
-                                    "ppn", ppn,
+                                    "floor",
+                                    comment.floor,
+                                    "pid",
+                                    comment.pid,
+                                    "pn",
+                                    comments.page.current_page,
+                                    "ppid",
+                                    comment.ppid,
+                                    "ppn",
+                                    ppn,
                                 ],
                             )
                         )
@@ -330,7 +344,7 @@ rn = 30
             posts1 = await client.get_posts(tid, pn, rn=rn, with_comments=False)
             for post in posts1.objs:
                 print(get_pid_floor(post))
-    
+
     结果:
         ...省略...
         ---------------------------
