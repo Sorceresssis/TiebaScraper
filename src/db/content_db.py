@@ -1,3 +1,4 @@
+import os
 import sqlite3
 from typing import Callable
 
@@ -5,15 +6,22 @@ from pojo.content_frag import ContentFragType
 
 
 class ContentDB(sqlite3.Connection):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, db_file, *args, **kwargs):
+        is_exists = os.path.exists(db_file)
+
+        super().__init__(db_file, *args, **kwargs)
         self.isolation_level = None  # 开启自动提交
         self.execute("pragma journal_mode=wal;")
-        self.__data_definition()  # 创建表
-        self.__insert_content_fragment_type()  # 插入一些提前定义的数据
+
+        if is_exists:
+            # TODO 读取版本升级
+            pass
+        else:
+            self.__data_definition()  # 创建表
+            self.__insert_content_fragment_type()  # 插入一些提前定义的数据
 
     def __data_definition(self) -> None:
-        DDL = """
+        ddl = """
         DROP TABLE IF EXISTS post;
         CREATE TABLE post
         (
@@ -86,7 +94,13 @@ class ContentDB(sqlite3.Connection):
         CREATE UNIQUE INDEX 'uk_tieba_origin_src(filename)' ON tieba_origin_src (filename);
         CREATE INDEX 'idx_tieba_origin_src(content_frag_type)' ON tieba_origin_src (content_frag_type);
         """
-        self.executescript(DDL)
+        self.executescript(ddl)
+
+    def __update_db(self):
+        pass
+
+    def __insert_db_info(self) -> None:
+        pass
 
     def __insert_content_fragment_type(self) -> None:
         params = [

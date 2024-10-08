@@ -9,6 +9,7 @@ from container.container import Container
 from db.tieba_origin_src_dao import TiebaOriginSrcDao
 from db.user_dao import UserDao
 from pojo.content_frag import ContentFragType
+from pojo.enums import DownloadUserAvatarModeType
 from pojo.producer_consumer_contact import ProducerConsumerContact
 from pojo.tieba_origin_src_entity import TiebaOriginSrcEntity
 from pojo.user_entity import UserEntity
@@ -17,7 +18,6 @@ from scrape_config import ScrapeConfig
 from utils.fs import download_file
 from utils.logger import generate_scrape_logger_msg
 from utils.msg_printer import MsgPrinter
-from pojo.enums import DownloadUserAvatarModeType
 
 
 class UserService:
@@ -114,13 +114,27 @@ class UserService:
         )
         self.user_cursor.close()
 
+    async def complete_new_user_info(self, update_threshold_pid: int):
+        self.user_cursor = self.user_dao.query()
+        queue_maxsize = 10
+        producers_num = 15
+        consumers_num = 10
+        consumer_await_timeout = 8
+        contact = ProducerConsumerContact(queue_maxsize, producers_num, consumers_num, consumer_await_timeout)
+
+        await asyncio.gather(
+            *[self.fetch_user_info(contact) for _ in range(producers_num)],
+            *[self.save_user_info(contact) for _ in range(consumers_num)]
+        )
+        self.user_cursor.close()
+
     async def fetch_user_info(self, contact: ProducerConsumerContact) -> None:
         while True:
             user_tuple = self.fetchone_user_entity_from_cursor()
-            if user_tuple is None:
+            user_entity = self.user_dao.user_entity_factory_from_tuple(user_tuple)
+            if user_entity is None:
                 break
 
-            user_entity = self.user_dao.user_entity_factory_from_tuple(user_tuple)
             user_info = await get_user_info(user_entity.id, user_entity.portrait)
 
             if user_info is None:

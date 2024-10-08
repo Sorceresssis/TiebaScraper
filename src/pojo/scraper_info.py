@@ -31,5 +31,5 @@ class ScraperInfo:
 class ScraperInfoDict(TypedDict):
     main_thread: int
     create_time: int
-    update_record: list[int]
+    update_times: list[int]
     scraper_version: str

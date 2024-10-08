@@ -69,37 +69,39 @@ class ScrapeDataPathBuilder:
         return avatar_dir
 
     def get_post_image_dir(self, tid: int):
-        image_dir = path.join(
-            self.item_dir, "threads", f"{tid}", "post_assets", "images"
-        )
+        image_dir = path.join(self.item_dir, "threads", f"{tid}", "post_assets", "images")
         os.makedirs(image_dir, exist_ok=True)
         return image_dir
 
     def get_post_video_dir(self, tid: int):
-        video_dir = path.join(
-            self.item_dir, "threads", f"{tid}", "post_assets", "videos"
-        )
+        video_dir = path.join(self.item_dir, "threads", f"{tid}", "post_assets", "videos")
         os.makedirs(video_dir, exist_ok=True)
         return video_dir
 
     def get_post_voice_dir(self, tid: int):
-        voice_dir = path.join(
-            self.item_dir, "threads", f"{tid}", "post_assets", "voices"
-        )
+        voice_dir = path.join(self.item_dir, "threads", f"{tid}", "post_assets", "voices")
         os.makedirs(voice_dir, exist_ok=True)
         return voice_dir
 
     @staticmethod
+    def get_forum_small_avatar_filename(forum_name: str):
+        return f"f_{forum_name}_small-avatar_{get_timestamp()}"
+
+    @staticmethod
+    def get_forum_origin_avatar_filename(forum_name: str):
+        return f"f_{forum_name}_origin-avatar_{get_timestamp()}"
+
+    @staticmethod
     def get_user_avatar_filename(portrait: str):
-        return f"{portrait}"
+        return f"{portrait}_{get_timestamp()}"
 
     @staticmethod
     def get_post_image_filename(pid: int, idx: int):
-        return f"p_{pid}_{idx}-{get_timestamp()}"
+        return f"p_{pid}_{idx}_{get_timestamp()}"
 
     @staticmethod
     def get_post_video_filename(pid: int, idx: int):
-        return f"p_{pid}_{idx}-{get_timestamp()}"
+        return f"p_{pid}_{idx}_{get_timestamp()}"
 
     @staticmethod
     def get_post_voice_filename(voice_hash: str):

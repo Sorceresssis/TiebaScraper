@@ -21,8 +21,9 @@ class PostService:
         self.post_dao = PostDao()
         self.content_service = ContentService()
         self.user_service = UserService()
+        self.update_threshold: int | None = None
 
-    async def scrape_post(self, total_page: int):
+    async def scrape_post(self, total_page: int, *, is_update: bool = False) -> None:
         queue_maxsize = 10
         max_producers_num = 3
         producers_num = min(max_producers_num, total_page)
@@ -38,12 +39,18 @@ class PostService:
             end_pn = start_pn + pages_per_producer - 1
             if i == producers_num - 1:
                 end_pn = total_page
-
             tasks.append(self.fetch_post(contact, start_pn, end_pn))
             start_pn = end_pn + 1
 
+        latest_pid = 0
+        if is_update:
+            latest_post = self.post_dao.query_latest_post()
+            if latest_post is not None:
+                latest_pid = latest_post.id
+            self.update_threshold = latest_pid
+
         for _ in range(consumers_num):
-            tasks.append(self.save_post(contact))
+            tasks.append(self.save_post(contact, latest_pid))
 
         await asyncio.gather(*tasks)
 
@@ -64,13 +71,12 @@ class PostService:
 
             await contact.tasks_queue.put(posts)
 
-        print(f"producer {contact.producers_num} fetch_post end")
         contact.running_producers -= 1
         if contact.running_producers == 0:
             for _ in range(contact.consumers_num):
                 await contact.tasks_queue.put(None)
 
-    async def save_post(self, contact: ProducerConsumerContact) -> None:
+    async def save_post(self, contact: ProducerConsumerContact, latest_pid: int = 0) -> None:
         while True:
             try:
                 posts: Posts = await asyncio.wait_for(
@@ -82,12 +88,24 @@ class PostService:
 
                 for post in posts.objs:
                     try:
-                        # 这里的判断注释见本文件最下方 # Comment 1
-                        if post.pid <= 0:
+                        # Comment 1
+                        # 已经被保存的帖子
+                        if post.pid <= latest_pid:
+                            self.post_dao.update_post_traffic_by_id(
+                                post.pid, post.agree, post.disagree, post.reply_num
+                            )
+
+                            if len(post.comments) != 0:
+                                await self.scrape_comments(
+                                    post.pid,
+                                    post.floor,
+                                    posts.page.current_page,
+                                    post.reply_num,
+                                    is_update=True,
+                                )
                             continue
 
                         await self.user_service.register_user_from_post_user(post.user)
-
                         post_contents = await self.content_service.process_contents(
                             post.contents.objs,
                             ContentsAffiliation(posts.page.current_page, post.pid, post.floor),
@@ -179,16 +197,31 @@ class PostService:
         )
         MsgPrinter.print_success("", "SavePost", ["floor", post.floor, "pid", post.pid])
 
-    async def scrape_comments(self, ppid: int, floor: int, ppn: int, reply_num: int) -> None:
+    async def scrape_comments(
+        self,
+        ppid: int,
+        floor: int,
+        ppn: int,
+        reply_num: int,
+        *,
+        is_update: bool = False,
+    ) -> None:
         queue_maxsize = 8 if reply_num > 8 else reply_num
         producers_num = 1
         consumers_num = queue_maxsize
         consumer_await_timeout = 8
         contact = ProducerConsumerContact(queue_maxsize, producers_num, consumers_num, consumer_await_timeout)
 
+        latest_sub_pid = 0
+        if is_update:
+            latest_sub_post = self.post_dao.query_latest_sub_post_by_pid(ppid)
+            if latest_sub_post is not None:
+                latest_sub_pid = self.post_dao.query_latest_sub_post_by_pid(ppid).id
+                self.update_threshold = min(self.update_threshold, latest_sub_pid)
+
         await asyncio.gather(
             self.fetch_comments(contact, ppid, floor),
-            *[self.save_comments(contact, ppn) for _ in range(consumers_num)],
+            *[self.save_comments(contact, ppn, latest_sub_pid) for _ in range(consumers_num)],
         )
 
     async def fetch_comments(self, contact: ProducerConsumerContact, ppid: int, floor: int):
@@ -219,7 +252,7 @@ class PostService:
             for _ in range(contact.consumers_num):
                 await contact.tasks_queue.put(None)
 
-    async def save_comments(self, contact: ProducerConsumerContact, ppn: int):
+    async def save_comments(self, contact: ProducerConsumerContact, ppn: int, latest_sub_pid: int = 0):
         while True:
             try:
                 comments: Comments = await asyncio.wait_for(
@@ -231,6 +264,12 @@ class PostService:
 
                 for comment in comments.objs:
                     try:
+                        if comment.pid <= latest_sub_pid:
+                            self.post_dao.update_post_traffic_by_id(
+                                comment.pid, comment.agree, comment.disagree, 0
+                            )
+                            continue
+
                         await self.user_service.register_user_from_comment_user(comment.user)
                         # 之前想被回复者一定回出现在楼中楼里，所以没有去把回复者插入数据
                         # 但是可能回出现被回复在删除自己回复的情况所以这里也要执行insert操作
@@ -319,13 +358,6 @@ class PostService:
             except asyncio.TimeoutError:
                 if contact.running_producers == 0:
                     return
-
-    async def update_scrape_post(self, total_page: int):
-        pass
-
-    async def update_post(self, contact: ProducerConsumerContact) -> None:
-        # 获取 当前楼层最新回复的时间。
-        self.post_dao.query_latest_response_time_of_floor(1)
 
 
 # Comment 1 : 判断 pid 是否 <= 0 的注释。

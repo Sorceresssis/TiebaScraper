@@ -16,6 +16,7 @@ class ScrapeConfig:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> None:
+        # TODO 可以优化检查的代码，给个检查基本都一样。
         download_user_avatar_mode = data.get("DOWNLOAD_USER_AVATAR_MODE", 2)
         if download_user_avatar_mode not in DownloadUserAvatarModeType:
             raise ValueError("DOWNLOAD_USER_AVATAR_MODE 的值必须是 0, 1, 2 中的一个")

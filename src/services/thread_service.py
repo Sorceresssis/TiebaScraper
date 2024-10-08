@@ -128,8 +128,8 @@ class ThreadService:
 
             forum_avatar_dir = (self.scrape_data_path_builder.get_forum_avatar_dir(self.tid))
 
-            small_avatar_filename = "f_small_avatar"
-            origin_avatar_filename = "f_origin_avatar"
+            small_avatar_filename = self.scrape_data_path_builder.get_forum_small_avatar_filename(forum.fname)
+            origin_avatar_filename = self.scrape_data_path_builder.get_forum_origin_avatar_filename(forum.fname)
 
             try:
                 small_avatar_filename = (await download_file(

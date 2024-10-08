@@ -125,7 +125,6 @@ async def scrape(tid: int):
     scrape_end_time = time.time()
     scrape_duration = scrape_end_time - scrape_start_time
 
-    MsgPrinter.print_tip(
-        f"全部爬取完成, 耗时 {int(scrape_duration // 60)} 分 {round(scrape_duration % 60, 2)} 秒"
-    )
+    MsgPrinter.print_step_mark("任务完成")
+    MsgPrinter.print_tip(f"耗时 {int(scrape_duration // 60)} 分 {round(scrape_duration % 60, 2)} 秒")
     MsgPrinter.print_tip(f"帖子数据保存在: {scrape_data_path_builder.get_item_dir()}")

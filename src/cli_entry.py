@@ -6,6 +6,7 @@ import orjson
 import questionary
 
 from modules.scrape_module import scrape
+from modules.scrape_update_module import scrape_update
 from pojo.enums import ProgramFeatures
 from scrape_config import ScrapeConfig
 from tieba_auth import TiebaAuth
@@ -72,7 +73,7 @@ features_choices = [
         ProgramFeatures.SCRAPE,
     ),
     questionary.Choice(
-        "2. 更新本地的帖子数据(未实现)",
+        "2. 更新本地的帖子数据",
         ProgramFeatures.SCRAPE_UPDATE,
     ),
     questionary.Choice(
@@ -92,12 +93,13 @@ def main():
             tid = int(questionary.text("请输入要爬取的帖子的tid: ").ask())
             asyncio.run(scrape(tid))
         elif selected_features == ProgramFeatures.SCRAPE_UPDATE:
-            # questionary.path
-            print(f"{PrintColor.RED}该功能尚未实现{PrintColor.RESET}")
+            read_tieba_auth()
+            read_scrape_config()
+            path = input("请输入本地帖子数据的路径: ")
+            asyncio.run(scrape_update(path))
         elif selected_features == ProgramFeatures.EXPORT_TO_READABLE:
             print(f"{PrintColor.RED}该功能尚未实现{PrintColor.RESET}")
 
-        # 按下任意键继续
         input("按下回车键继续...\n")
 
 

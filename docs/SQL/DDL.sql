@@ -1,3 +1,13 @@
+DROP TABLE IF EXISTS 'db_info';
+CREATE TABLE 'db_info'
+(
+    'name'  TEXT PRIMARY KEY,
+    'value' TEXT NOT NULL
+);
+INSERT INTO 'db_info'
+VALUES ('scraper_version', '1');
+
+
 DROP TABLE IF EXISTS post;
 CREATE TABLE post
 (
