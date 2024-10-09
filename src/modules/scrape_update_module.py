@@ -16,6 +16,7 @@ from utils.msg_printer import MsgPrinter
 
 async def scrape_update(path: str):
     update_start_time = time.time()
+    Container.set_scrape_timestamp(int(update_start_time))
 
     MsgPrinter.print_step_mark("开始读取本地数据")
 
@@ -41,18 +42,21 @@ async def scrape_update(path: str):
     with open(scrape_info_path, "r") as file:
         data = orjson.loads(file.read())
 
-    update_time: float = time.time()
     updating_tid = data["main_thread"]
-
     while updating_tid != 0:
+        Container.set_tid(updating_tid)
+        content_db = Container.get_content_db()
+        scrape_logger = Container.get_scrape_logger()
+
+        with open(scrape_data_path_builder.get_thread_info_path(updating_tid), "r") as file:
+            thread_info_dict = orjson.loads(file.read())
+
         pre_fetch_posts = await get_posts(updating_tid)
 
         if pre_fetch_posts is None:
             MsgPrinter.print_error(f"帖子可能已删除", "ScrapeUpdate", ["tid", updating_tid])
-            # 不能直接跳出, 如果是一个分享帖，其 share_origin 可能还在.
-
-        Container.set_tid(updating_tid)
-        content_db = Container.get_content_db()
+            updating_tid = thread_info_dict["share_origin"]
+            continue
 
         post_service = PostService()
         user_service = UserService()
@@ -60,6 +64,7 @@ async def scrape_update(path: str):
 
         await post_service.scrape_post(pre_fetch_posts.page.total_page, is_update=True)
 
+        MsgPrinter.print_step_mark()
         await asyncio.gather(
             thread_service.save_forum_info(pre_fetch_posts.forum.fid),
             thread_service.save_thread_info(pre_fetch_posts.thread),
@@ -67,23 +72,14 @@ async def scrape_update(path: str):
 
         MsgPrinter.print_step_mark("开始集中完善用户信息", ["tid", updating_tid])
 
-        # if post_service.update_threshold:
-        #     await user_service.complete_new_user_info()
-
-        # TODO thread_info $ forum_info
-
-        # with open(scrape_data_path_builder.get_thread_info_path(updating_tid), "r") as file:
-        # thread_info_dict = orjson.loads(file.read())
-
-        # updating_tid = thread_info_dict["share_origin"]
+        # TODO update shared origin config
 
         content_db.close()
         MsgPrinter.print_step_mark("帖子更新完成", ["tid", updating_tid])
 
-        # updata shared orign
-        updating_tid = 0
+        updating_tid = thread_info_dict["share_origin"]
 
-    data["update_times"].append(int(update_time))
+    data["update_times"].append(Container.get_scrape_timestamp())
     with open(scrape_info_path, "w") as file:
         file.write(orjson.dumps(data).decode("utf-8"))
 

@@ -1,3 +1,8 @@
+import hashlib
+import os
+import re
+from typing import List
+
 import aiofiles
 import orjson
 from aiotieba.api.get_posts._classdef import Thread_p, ShareThread_pt
@@ -55,18 +60,11 @@ class ThreadService:
             )
 
             async with aiofiles.open(
-                    self.scrape_data_path_builder.get_thread_info_path(self.tid),
-                    'w',
-                    encoding='utf-8'
+                self.scrape_data_path_builder.get_thread_info_path(self.tid), "w", encoding="utf-8"
             ) as file:
                 await file.write(orjson.dumps(thread_info).decode("utf-8"))
             MsgPrinter.print_success(
-                "主题帖信息保存成功",
-                "SaveThreadInfo",
-                [
-                    "tid", thread.tid,
-                    "title", thread.title
-                ]
+                "主题帖信息保存成功", "SaveThreadInfo", ["tid", thread.tid, "title", thread.title]
             )
         except Exception as e:
             MsgPrinter.print_error(str(e), "SaveThreadInfo", ["tid", thread.tid, "title", thread.title])
@@ -94,29 +92,32 @@ class ThreadService:
                             share_origin.vote_info.options,
                         )
                     ),
-                ), 0, 0, 0, 0, 0, 0, 0
+                ),
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
             )
 
             async with aiofiles.open(
-                    self.scrape_data_path_builder.get_thread_info_path(self.tid),
-                    'w',
-                    encoding='utf-8'
+                self.scrape_data_path_builder.get_thread_info_path(self.tid), "w", encoding="utf-8"
             ) as file:
                 await file.write(orjson.dumps(thread_info).decode("utf-8"))
 
             MsgPrinter.print_success(
                 "主题帖信息保存成功",
                 "SaveThreadInfo-Incomplete(ShareOrigin)",
-                [
-                    "tid", share_origin.tid,
-                    "title", share_origin.title
-                ]
+                ["tid", share_origin.tid, "title", share_origin.title],
             )
         except Exception as e:
             MsgPrinter.print_error(
                 str(e),
                 "SaveThreadInfo-Incomplete(ShareOrigin)",
-                ["tid", share_origin.tid, "title", share_origin.title])
+                ["tid", share_origin.tid, "title", share_origin.title],
+            )
 
     async def save_forum_info(self, fid: int):
         try:
@@ -126,36 +127,64 @@ class ThreadService:
             if (forum is None) or (forum_detail is None):
                 return
 
-            forum_avatar_dir = (self.scrape_data_path_builder.get_forum_avatar_dir(self.tid))
+            forum_avatar_dir = self.scrape_data_path_builder.get_forum_avatar_dir(self.tid)
 
             small_avatar_filename = self.scrape_data_path_builder.get_forum_small_avatar_filename(forum.fname)
-            origin_avatar_filename = self.scrape_data_path_builder.get_forum_origin_avatar_filename(forum.fname)
+            origin_avatar_filename = self.scrape_data_path_builder.get_forum_origin_avatar_filename(
+                forum.fname
+            )
 
             try:
-                small_avatar_filename = (await download_file(
-                    forum_detail.small_avatar,
+                small_avatar_filename = (
+                    await download_file(
+                        forum_detail.small_avatar,
+                        forum_avatar_dir,
+                        small_avatar_filename,
+                    )
+                )[0]
+            except Exception as e:
+                MsgPrinter.print_error(
+                    str(e), "SaveForum-SmallAvatar", ["fid", forum.fid, "fname", forum.fname]
+                )
+                self.scrape_logger.error(
+                    generate_scrape_logger_msg(
+                        str(e), "SaveForum-SmallAvatar", ["fid", forum.fid, "fname", forum.fname]
+                    )
+                )
+
+            try:
+                origin_avatar_filename = (
+                    await download_file(
+                        forum_detail.origin_avatar,
+                        forum_avatar_dir,
+                        origin_avatar_filename,
+                    )
+                )[0]
+            except Exception as e:
+                MsgPrinter.print_error(
+                    str(e), "SaveForum-OriginAvatar", ["fid", forum.fid, "fname", forum.fname]
+                )
+                self.scrape_logger.error(
+                    generate_scrape_logger_msg(
+                        str(e), "SaveForum-OriginAvatar", ["fid", forum.fid, "fname", forum.fname]
+                    )
+                )
+
+            deleted_files: List[str] = [
+                *remove_duplicate_files(
                     forum_avatar_dir,
+                    self.scrape_data_path_builder.get_forum_small_avatar_filename_pattern(),
                     small_avatar_filename,
-                ))[0]
-            except Exception as e:
-                MsgPrinter.print_error(str(e), "SaveForum-SmallAvatar", ["fid", forum.fid, "fname", forum.fname])
-                self.scrape_logger.error(
-                    generate_scrape_logger_msg(str(e), "SaveForum-SmallAvatar",
-                                               ["fid", forum.fid, "fname", forum.fname])
-                )
-
-            try:
-                origin_avatar_filename = (await download_file(
-                    forum_detail.origin_avatar,
+                ),
+                *remove_duplicate_files(
                     forum_avatar_dir,
+                    self.scrape_data_path_builder.get_forum_origin_avatar_filename_pattern(),
                     origin_avatar_filename,
-                ))[0]
-            except Exception as e:
-                MsgPrinter.print_error(str(e), "SaveForum-OriginAvatar", ["fid", forum.fid, "fname", forum.fname])
-                self.scrape_logger.error(
-                    generate_scrape_logger_msg(str(e), "SaveForum-OriginAvatar",
-                                               ["fid", forum.fid, "fname", forum.fname])
-                )
+                ),
+            ]
+
+            for file in deleted_files:
+                self.tieba_origin_src_dao.delete_by_filename(file)
 
             forum_info = ForumInfo(
                 forum.fid,
@@ -171,13 +200,11 @@ class ThreadService:
             )
 
             async with aiofiles.open(
-                    self.scrape_data_path_builder.get_forum_info_path(self.tid),
-                    'w',
-                    encoding='utf-8'
+                self.scrape_data_path_builder.get_forum_info_path(self.tid), "w", encoding="utf-8"
             ) as file:
                 await file.write(orjson.dumps(forum_info).decode("utf-8"))
 
-            # 把源连接写入数据库
+            # 把源链接写入数据库
             self.tieba_origin_src_dao.insert(
                 TiebaOriginSrcEntity(
                     small_avatar_filename,
@@ -194,16 +221,37 @@ class ThreadService:
             )
 
             MsgPrinter.print_success(
-                "主题帖的吧信息保存成功",
-                "SaveForumInfo",
-                [
-                    "fid", forum.fid,
-                    "fname", forum.fname
-                ]
+                "主题帖的吧信息保存成功", "SaveForumInfo", ["fid", forum.fid, "fname", forum.fname]
             )
         except Exception as e:
-            MsgPrinter.print_error(
-                str(e),
-                "SaveForumInfo",
-                ["fid", fid]
-            )
+            MsgPrinter.print_error(str(e), "SaveForumInfo", ["fid", fid])
+
+
+def hash_file(file_path: str) -> str:
+    """计算文件的哈希值"""
+    hasher = hashlib.md5()
+    with open(file_path, "rb") as f:
+        while chunk := f.read(8192):
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+
+def remove_duplicate_files(directory: str, reg: str, target_filename: str) -> List[str]:
+    """删除与给定文件内容相同的文件，并返回被删除的文件名列表"""
+    target_file_path = os.path.join(directory, target_filename)
+    deleted_files = []  # 用于存储被删除的文件名
+
+    if not os.path.isfile(target_file_path):
+        return deleted_files
+
+    target_file_hash = hash_file(target_file_path)
+
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if re.match(reg, file) and file != target_filename:
+                file_path = os.path.join(root, file)
+                if hash_file(file_path) == target_file_hash:
+                    os.remove(file_path)
+                    deleted_files.append(file)  # 添加到被删除的文件名列表
+
+    return deleted_files  # 返回被删除的文件名列表

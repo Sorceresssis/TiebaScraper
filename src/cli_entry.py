@@ -80,6 +80,10 @@ features_choices = [
         "3. 导出为可读文件(未实现)",
         ProgramFeatures.EXPORT_TO_READABLE,
     ),
+    questionary.Choice(
+        "4. 修改爬取配置",
+        ProgramFeatures.MODIFY_SCRAPE_CONFIG,
+    ),
 ]
 
 
@@ -98,6 +102,8 @@ def main():
             path = input("请输入本地帖子数据的路径: ")
             asyncio.run(scrape_update(path))
         elif selected_features == ProgramFeatures.EXPORT_TO_READABLE:
+            print(f"{PrintColor.RED}该功能尚未实现{PrintColor.RESET}")
+        elif selected_features == ProgramFeatures.MODIFY_SCRAPE_CONFIG:
             print(f"{PrintColor.RED}该功能尚未实现{PrintColor.RESET}")
 
         input("按下回车键继续...\n")

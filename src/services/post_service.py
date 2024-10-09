@@ -21,7 +21,6 @@ class PostService:
         self.post_dao = PostDao()
         self.content_service = ContentService()
         self.user_service = UserService()
-        self.update_threshold: int | None = None
 
     async def scrape_post(self, total_page: int, *, is_update: bool = False) -> None:
         queue_maxsize = 10
@@ -47,7 +46,6 @@ class PostService:
             latest_post = self.post_dao.query_latest_post()
             if latest_post is not None:
                 latest_pid = latest_post.id
-            self.update_threshold = latest_pid
 
         for _ in range(consumers_num):
             tasks.append(self.save_post(contact, latest_pid))
@@ -55,10 +53,10 @@ class PostService:
         await asyncio.gather(*tasks)
 
     async def fetch_post(
-        self,
-        contact: ProducerConsumerContact,
-        start_pn: int,
-        end_pn: int,
+            self,
+            contact: ProducerConsumerContact,
+            start_pn: int,
+            end_pn: int,
     ) -> None:
         pn = start_pn
 
@@ -198,13 +196,13 @@ class PostService:
         MsgPrinter.print_success("", "SavePost", ["floor", post.floor, "pid", post.pid])
 
     async def scrape_comments(
-        self,
-        ppid: int,
-        floor: int,
-        ppn: int,
-        reply_num: int,
-        *,
-        is_update: bool = False,
+            self,
+            ppid: int,
+            floor: int,
+            ppn: int,
+            reply_num: int,
+            *,
+            is_update: bool = False,
     ) -> None:
         queue_maxsize = 8 if reply_num > 8 else reply_num
         producers_num = 1
@@ -217,7 +215,6 @@ class PostService:
             latest_sub_post = self.post_dao.query_latest_sub_post_by_pid(ppid)
             if latest_sub_post is not None:
                 latest_sub_pid = self.post_dao.query_latest_sub_post_by_pid(ppid).id
-                self.update_threshold = min(self.update_threshold, latest_sub_pid)
 
         await asyncio.gather(
             self.fetch_comments(contact, ppid, floor),
