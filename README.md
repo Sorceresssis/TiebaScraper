@@ -19,9 +19,9 @@
 
 在 `releases` 里下载最新的可执行文件。解压后双击打开 `TiebaScraper.exe` 就会出现下图的命令行界面。
 
-你可以通过方向键来选择你想要进行的操作(尽管目前就一个功能 😂)。
+你可以通过方向键来选择你想要进行的操作
 
-![1724537635702](./assets/README/images/1724537635702.png)
+![1724537635702](./docs/assets/README/images/1724537635702.png)
 
 ### 2. 获取 BDUSS
 
@@ -51,7 +51,7 @@ BDUSS 是一串由纯 ascii 字符组成的，长度为 192 的字符串
 
 [爬取配置](./docs/scrape_config.md)
 
-![1724571055689](./assets/README/images/1724571055689.png)
+![1724571055689](./docs/assets/README/images/1724571055689.png)
 
 ### 4. 获取帖子的 tid
 
