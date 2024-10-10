@@ -18,6 +18,7 @@ from utils.msg_printer import MsgPrinter
 
 async def scrape(tid: int):
     scrape_start_time = time.time()
+    Container.set_scrape_timestamp(int(scrape_start_time))
 
     pre_post = await get_posts(tid, 1)
     if pre_post is None:
@@ -42,7 +43,7 @@ async def scrape(tid: int):
 
     # ScraperInfo
     with open(scrape_data_path_builder.get_scrape_info_path(), "w", encoding="utf-8") as file:
-        file.write(orjson.dumps(ScraperInfo(tid)).decode("utf-8"))
+        file.write(orjson.dumps(ScraperInfo(tid, Container.get_scrape_timestamp())).decode("utf-8"))
 
     scraping_tid: int = tid
     is_scraping_share_origin: bool = False
@@ -125,7 +126,6 @@ async def scrape(tid: int):
     scrape_end_time = time.time()
     scrape_duration = scrape_end_time - scrape_start_time
 
-    MsgPrinter.print_tip(
-        f"全部爬取完成, 耗时 {int(scrape_duration // 60)} 分 {round(scrape_duration % 60, 2)} 秒"
-    )
+    MsgPrinter.print_step_mark("任务完成")
+    MsgPrinter.print_tip(f"耗时 {int(scrape_duration // 60)} 分 {round(scrape_duration % 60, 2)} 秒")
     MsgPrinter.print_tip(f"帖子数据保存在: {scrape_data_path_builder.get_item_dir()}")

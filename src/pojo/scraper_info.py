@@ -1,4 +1,3 @@
-import time
 from dataclasses import dataclass
 from typing import TypedDict
 
@@ -21,9 +20,9 @@ class ScraperInfo:
     update_record: list[str]
     scraper_version: str
 
-    def __init__(self, main_thread: int) -> None:
+    def __init__(self, main_thread: int, create_time: int) -> None:
         self.main_thread = main_thread
-        self.create_time = int(time.time())
+        self.create_time = create_time
         self.update_times = []
         self.scraper_version = SCRAPER_VERSION
 
@@ -31,5 +30,5 @@ class ScraperInfo:
 class ScraperInfoDict(TypedDict):
     main_thread: int
     create_time: int
-    update_record: list[int]
+    update_times: list[int]
     scraper_version: str

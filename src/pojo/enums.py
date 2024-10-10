@@ -5,6 +5,7 @@ class ProgramFeatures(IntEnum):
     SCRAPE = auto()
     SCRAPE_UPDATE = auto()
     EXPORT_TO_READABLE = auto()
+    MODIFY_SCRAPE_CONFIG = auto()
 
 
 class DownloadUserAvatarModeType(IntEnum):

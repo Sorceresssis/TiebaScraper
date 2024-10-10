@@ -28,3 +28,6 @@ class UserEntity:
     level: int = 0
     is_bawu: bool = False
     status: int = UserStatus.ACTIVE
+
+    completed: int = 0  # 0 | 1
+    scrape_time: int = 0

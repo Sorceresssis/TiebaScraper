@@ -6,6 +6,7 @@ from utils.logger import ScrapeLogger
 class Container:
     scrape_data_path_builder: ScrapeDataPathBuilder | None = None
     tid: int = 0
+    scrape_timestamp: int = 0
     scrape_logger: ScrapeLogger | None = None  # 依赖scraped_path_constructor
     content_db: ContentDB | None = None
 
@@ -35,15 +36,29 @@ class Container:
         cls.content_db = None
 
     @classmethod
+    def set_scrape_timestamp(cls, timestamp: int) -> None:
+        cls.scrape_timestamp = timestamp
+
+    @classmethod
+    def get_scrape_timestamp(cls) -> int:
+        if cls.scrape_timestamp == 0:
+            raise Exception("scrape_timestamp is not set")
+        return cls.scrape_timestamp
+
+    @classmethod
     def get_scrape_logger(cls):
         if cls.scrape_logger is None:
-            cls.scrape_logger = ScrapeLogger(cls.get_scrape_data_path_builder().get_scrape_log_path(cls.tid))
+            cls.scrape_logger = ScrapeLogger(
+                cls.get_scrape_data_path_builder().get_scrape_log_path(cls.tid, cls.scrape_timestamp))
 
         return cls.scrape_logger
 
     @classmethod
     def get_content_db(cls) -> ContentDB:
         if cls.content_db is None:
-            cls.content_db = ContentDB(cls.get_scrape_data_path_builder().get_content_db_path(cls.tid))
+            cls.content_db = ContentDB(
+                cls.get_scrape_data_path_builder().get_content_db_path(cls.tid),
+                cls.tid,
+            )
 
         return cls.content_db

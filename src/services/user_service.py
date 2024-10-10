@@ -1,4 +1,5 @@
 import asyncio
+import time
 
 from aiotieba.api.get_comments import UserInfo_c
 from aiotieba.api.get_posts import UserInfo_p
@@ -9,6 +10,7 @@ from container.container import Container
 from db.tieba_origin_src_dao import TiebaOriginSrcDao
 from db.user_dao import UserDao
 from pojo.content_frag import ContentFragType
+from pojo.enums import DownloadUserAvatarModeType
 from pojo.producer_consumer_contact import ProducerConsumerContact
 from pojo.tieba_origin_src_entity import TiebaOriginSrcEntity
 from pojo.user_entity import UserEntity
@@ -17,7 +19,6 @@ from scrape_config import ScrapeConfig
 from utils.fs import download_file
 from utils.logger import generate_scrape_logger_msg
 from utils.msg_printer import MsgPrinter
-from pojo.enums import DownloadUserAvatarModeType
 
 
 class UserService:
@@ -101,7 +102,7 @@ class UserService:
         await self.user_dao.insert(UserEntity(user_id))
 
     async def complete_user_info(self):
-        self.user_cursor = self.user_dao.query()
+        self.user_cursor = self.user_dao.query_not_completed()
         queue_maxsize = 10
         producers_num = 15
         consumers_num = 10
@@ -116,11 +117,10 @@ class UserService:
 
     async def fetch_user_info(self, contact: ProducerConsumerContact) -> None:
         while True:
-            user_tuple = self.fetchone_user_entity_from_cursor()
-            if user_tuple is None:
+            user_entity = self.fetchone_user_entity_from_cursor()
+            if user_entity is None:
                 break
 
-            user_entity = self.user_dao.user_entity_factory_from_tuple(user_tuple)
             user_info = await get_user_info(user_entity.id, user_entity.portrait)
 
             if user_info is None:
@@ -153,6 +153,9 @@ class UserService:
 
             user_entity.is_vip = user_info.is_vip
             user_entity.is_god = user_info.is_god
+
+            user_entity.completed = 1
+            user_entity.scrape_time = int(time.time())
 
             await contact.tasks_queue.put(user_entity)
 
@@ -235,5 +238,6 @@ class UserService:
             )
             return None
 
-    def fetchone_user_entity_from_cursor(self) -> tuple | None:
-        return self.user_cursor.fetchone()
+    def fetchone_user_entity_from_cursor(self) -> UserEntity | None:
+        row_tuple = self.user_cursor.fetchone()
+        return self.user_dao.user_entity_factory_from_tuple(row_tuple)
