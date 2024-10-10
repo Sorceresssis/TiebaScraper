@@ -1,4 +1,5 @@
 import asyncio
+import time
 
 from aiotieba.api.get_comments import UserInfo_c
 from aiotieba.api.get_posts import UserInfo_p
@@ -101,21 +102,7 @@ class UserService:
         await self.user_dao.insert(UserEntity(user_id))
 
     async def complete_user_info(self):
-        self.user_cursor = self.user_dao.query()
-        queue_maxsize = 10
-        producers_num = 15
-        consumers_num = 10
-        consumer_await_timeout = 8
-        contact = ProducerConsumerContact(queue_maxsize, producers_num, consumers_num, consumer_await_timeout)
-
-        await asyncio.gather(
-            *[self.fetch_user_info(contact) for _ in range(producers_num)],
-            *[self.save_user_info(contact) for _ in range(consumers_num)]
-        )
-        self.user_cursor.close()
-
-    async def complete_new_user_info(self, update_threshold_pid: int):
-        self.user_cursor = self.user_dao.query()
+        self.user_cursor = self.user_dao.query_not_completed()
         queue_maxsize = 10
         producers_num = 15
         consumers_num = 10
@@ -130,8 +117,7 @@ class UserService:
 
     async def fetch_user_info(self, contact: ProducerConsumerContact) -> None:
         while True:
-            user_tuple = self.fetchone_user_entity_from_cursor()
-            user_entity = self.user_dao.user_entity_factory_from_tuple(user_tuple)
+            user_entity = self.fetchone_user_entity_from_cursor()
             if user_entity is None:
                 break
 
@@ -167,6 +153,9 @@ class UserService:
 
             user_entity.is_vip = user_info.is_vip
             user_entity.is_god = user_info.is_god
+
+            user_entity.completed = 1
+            user_entity.scrape_time = int(time.time())
 
             await contact.tasks_queue.put(user_entity)
 
@@ -249,5 +238,6 @@ class UserService:
             )
             return None
 
-    def fetchone_user_entity_from_cursor(self) -> tuple | None:
-        return self.user_cursor.fetchone()
+    def fetchone_user_entity_from_cursor(self) -> UserEntity | None:
+        row_tuple = self.user_cursor.fetchone()
+        return self.user_dao.user_entity_factory_from_tuple(row_tuple)

@@ -32,18 +32,16 @@ class UserDao:
         )
         return cursor
 
-    def query_a(self, pid: int):
+    def query_not_completed(self):
         cursor = self.db.cursor()
         cursor.execute(
             """
-            SELECT u.id, u.portrait, u.username, u.nickname, u.tieba_uid, u.avatar,
-                u.glevel, u.gender, u.ip , u.is_vip, u.is_god, u.age, u.sign,
-                u.post_num, u.agree_num, u.fan_num, u.follow_num, u.forum_num,
-                u.level, u.is_bawu, u.status
-            FROM user u JOIN post p ON u.id = p.user_id
-            WHERE p.id > ?;
-            """,
-            (pid,),
+            SELECT  id, portrait, username, nickname, tieba_uid, avatar,
+                    glevel, gender, ip ,is_vip, is_god, age, sign,
+                    post_num, agree_num, fan_num, follow_num, forum_num,
+                    level, is_bawu, status, completed, scrape_time
+            FROM user
+			WHERE completed = 0;"""
         )
         return cursor
 
@@ -56,8 +54,10 @@ class UserDao:
     async def insert(self, entity: UserEntity):
         async with lock:
             sql = """
-            INSERT INTO user(id, portrait, username, nickname, tieba_uid, avatar, glevel, gender, ip ,is_vip, is_god, age, sign, post_num, agree_num, fan_num, follow_num, forum_num, level, is_bawu, status)
-            VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
+            INSERT INTO user(id, portrait, username, nickname, tieba_uid, 
+                avatar, glevel, gender, ip ,is_vip, is_god, age, sign, post_num, agree_num, 
+                fan_num, follow_num, forum_num, level, is_bawu, status, completed, scrape_time)
+            VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
 
             try:
                 if self.check_exists_by_id(entity.id):
@@ -87,6 +87,8 @@ class UserDao:
                         entity.level,
                         entity.is_bawu,
                         entity.status,
+                        entity.completed,
+                        entity.scrape_time
                     ),
                 )
             except Exception as e:
@@ -105,8 +107,8 @@ class UserDao:
         SET
         	portrait=?, username=?, nickname=?, tieba_uid=?,
         	avatar=?, glevel=?, gender=?, ip=?, is_vip=?, is_god=?,
-        	age=?,sign=?, post_num=?, agree_num=?, fan_num=?,
-        	follow_num=?, forum_num=?, level=?, is_bawu=?, status=?
+        	age=?,sign=?, post_num=?, agree_num=?, fan_num=?, follow_num=?, forum_num=?, 
+        	level=?, is_bawu=?, status=?, completed=?, scrape_time=?
         WHERE id = ?
         """
 
@@ -133,6 +135,8 @@ class UserDao:
                 entity.level,
                 entity.is_bawu,
                 entity.status,
+                entity.completed,
+                entity.scrape_time,
                 entity.id,
             ),
         )
