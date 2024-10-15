@@ -15,7 +15,10 @@
 # 这种情况的会导致爬取完成时pid较大的post2被保存到本地。如果继续使用 2.1 的方法就会导致pid较小的subpost1被忽略。
 # 这种情况需要 max_pid 和 max_sub_pid 两个种类的数据。max_pid 来处理新增的post. max_sub_pid 来处理每个post下的新增subpost。
 # 因为max_pid 在 post 线性域 。 max_sub_pid 在 subpost 线性域。
-# 3. updateThreshold = min(max_pid, max_sub_pid) 是一个极点。所有新增的数据都在这个极点之后。
+
+
+# NOTE 2024-10-15
+# 如果两次爬取的配置不一样怎么办?
 
 
 import asyncio

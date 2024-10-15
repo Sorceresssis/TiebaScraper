@@ -1,7 +1,9 @@
 import os
+from typing import Any
 
 import aiofiles
 import aiohttp
+import orjson
 
 
 async def download_file(
@@ -51,3 +53,8 @@ async def download_file(
             attempt += 1
 
     raise Exception(f"Failed to download {url} after {retries} attempts")
+
+
+def json_dumps(data: Any):
+    return orjson.dumps(data, option=orjson.OPT_INDENT_2 | orjson.OPT_SORT_KEYS | orjson.OPT_NON_STR_KEYS).decode(
+        "utf-8")

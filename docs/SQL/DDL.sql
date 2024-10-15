@@ -9,6 +9,16 @@ INSERT INTO db_info
 VALUES ('scraper_version', ''),
        ('tid', '');
 
+-- (v1.3.1) 新增
+DROP TABLE IF EXISTS scrape_batch;
+CREATE TABLE scrape_batch
+(
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    scraper_version TEXT    NOT NULL,
+    scrape_config   TEXT    NOT NULL,
+    scrape_time     INTEGER NOT NULL
+);
+
 
 DROP TABLE IF EXISTS post;
 CREATE TABLE post
@@ -104,9 +114,12 @@ DROP TABLE IF EXISTS tieba_origin_src;
 CREATE TABLE tieba_origin_src
 (
     id                INTEGER PRIMARY KEY AUTOINCREMENT,
-    filename          TEXT    NOT NULL,
-    content_frag_type INTEGER NOT NULL,
-    origin_src        TEXT    NOT NULL
+    filename          TEXT              NOT NULL,
+    content_frag_type INTEGER           NOT NULL,
+    origin_src        TEXT              NOT NULL,
+
+--     asset_type        INTEGER           NOT NULL, -- (v1.3.1)  voice, video ,avatar, post
+--     save_stuts        INTEGER DEFAULT 0 NOT NULL  -- (v1.3.1) 0 未保存， 1 已保存, 2 保存失败, 3 已删除
 );
 CREATE UNIQUE INDEX 'uk_tieba_origin_src(filename)' ON tieba_origin_src (filename);
 CREATE INDEX 'idx_tieba_origin_src(content_frag_type)' ON tieba_origin_src (content_frag_type);

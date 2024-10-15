@@ -1,6 +1,10 @@
 from dataclasses import dataclass
+from enum import IntEnum, auto
 
-from pojo.user_status import UserStatus
+
+class UserStatus(IntEnum):
+    ACTIVE = 0  # 正常
+    DEACTIVATED = auto()  # 注销
 
 
 @dataclass

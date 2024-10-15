@@ -145,50 +145,67 @@ class ContentDB(sqlite3.Connection):
         self.executemany(content_fragment_type_insert_sql, content_fragment_type_insert_params)
 
     def __update_db_structure(self):
-        # 读取 db_info
-        scraper_version: str | None = None
+        # 模拟 switch 语句
+        def update_process():
+            # 读取 db_info
+            scraper_version: str | None = None
 
-        sql_db_info_select_sql = "SELECT * FROM sqlite_master WHERE type='table' AND name='db_info';"
-        sql_scraper_version_select = f"SELECT v FROM db_info WHERE k = '{DBInfoKey.SCRAPER_VERSION.value}';"
-        sql_scraper_version_update = (
-            f"UPDATE db_info SET v = '{SCRAPER_VERSION}' WHERE k = '{DBInfoKey.SCRAPER_VERSION.value}';"
-        )
-        if self.execute(sql_db_info_select_sql).fetchone():
-            scraper_version = self.execute(sql_scraper_version_select).fetchone()[0]
+            sql_db_info_select_sql = "SELECT * FROM sqlite_master WHERE type='table' AND name='db_info';"
+            sql_scraper_version_select = (
+                f"SELECT v FROM db_info WHERE k = '{DBInfoKey.SCRAPER_VERSION.value}';"
+            )
+            sql_scraper_version_update = (
+                f"UPDATE db_info SET v = '{SCRAPER_VERSION}' WHERE k = '{DBInfoKey.SCRAPER_VERSION.value}';"
+            )
+            if self.execute(sql_db_info_select_sql).fetchone():
+                row = self.execute(sql_scraper_version_select).fetchone()
+                if row is not None:
+                    scraper_version = row[0]
 
-        if "1.3.0" == scraper_version:
+            if scraper_version is None:
+                sql_alter__v_1_3_0 = """
+                    DROP TABLE IF EXISTS db_info;
+                    CREATE TABLE db_info
+                    (
+                        k TEXT PRIMARY KEY,
+                        v TEXT NOT NULL
+                    );
+
+                    ALTER TABLE user ADD COLUMN completed BOOLEAN DEFAULT 0 NOT NULL;
+                    CREATE INDEX 'idx_user(completed)' ON 'user'(completed);
+                    UPDATE user SET completed = 1;
+                    ALTER TABLE user ADD COLUMN scrape_time INTEGER DEFAULT 0 NOT NULL;
+
+                    DROP TABLE IF EXISTS user_info_history;
+                    CREATE TABLE user_info_history
+                    (
+                        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                        portrait    TEXT    DEFAULT NULL NULL,
+                        username    TEXT    DEFAULT NULL NULL,
+                        tieba_uid   INTEGER DEFAULT NULL NULL,
+                        field_name  TEXT              NOT NULL,
+                        field_value TEXT              NOT NULL,
+                        scrape_time INTEGER DEFAULT 0 NOT NULL
+                    );
+                    CREATE INDEX 'idx_user(tieba_uid)' ON user_info_history (tieba_uid);
+                    CREATE INDEX 'idx_user_info_history(portrait)' ON user_info_history (portrait);
+                    CREATE INDEX 'idx_user_info_history(field_name)' ON user_info_history (field_name);
+                """
+                self.executescript(sql_alter__v_1_3_0)
+                self.__insert_db_info_data()
+                yield "执行数据库升级 v1.2.1 -> v1.3.0 "
+            if "1.3.0" == scraper_version:
+                # sql_alter__v_1_3_1 = """"""
+                # self.executescript(sql_alter__v_1_3_1)
+                yield "执行数据库升级 v1.3.0 -> v1.3.1 "
+            if "1.3.1" == scraper_version:
+                yield "最新版本，无需更新"
+
             self.execute(sql_scraper_version_update)
-            return
-        sql_alter__v_1_3_0 = """
-            DROP TABLE IF EXISTS db_info;
-            CREATE TABLE db_info
-            (
-                k TEXT PRIMARY KEY,
-                v TEXT NOT NULL
-            );
+            yield "更新 scraper_version 完成"
 
-            ALTER TABLE user ADD COLUMN completed BOOLEAN DEFAULT 0 NOT NULL;
-            CREATE INDEX 'idx_user(completed)' ON 'user'(completed);
-            UPDATE user SET completed = 1;
-            ALTER TABLE user ADD COLUMN scrape_time INTEGER DEFAULT 0 NOT NULL;
-
-            DROP TABLE IF EXISTS user_info_history;
-            CREATE TABLE user_info_history
-            (
-                id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                portrait    TEXT    DEFAULT NULL NULL,
-                username    TEXT    DEFAULT NULL NULL,
-                tieba_uid   INTEGER DEFAULT NULL NULL,
-                field_name  TEXT              NOT NULL,
-                field_value TEXT              NOT NULL,
-                scrape_time INTEGER DEFAULT 0 NOT NULL
-            );
-            CREATE INDEX 'idx_user(tieba_uid)' ON user_info_history (tieba_uid);
-            CREATE INDEX 'idx_user_info_history(portrait)' ON user_info_history (portrait);
-            CREATE INDEX 'idx_user_info_history(field_name)' ON user_info_history (field_name);
-            """
-        self.executescript(sql_alter__v_1_3_0)
-        self.__insert_db_info_data()
+        for msg in update_process():
+            pass
 
     def __insert_db_info_data(self):
         db_info_insert_sql = "INSERT INTO db_info VALUES (?, ?);"

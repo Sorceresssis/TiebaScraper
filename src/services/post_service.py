@@ -8,6 +8,7 @@ from container.container import Container
 from db.post_dao import PostDao
 from pojo.post_entity import PostEntity
 from pojo.producer_consumer_contact import ProducerConsumerContact
+from scrape_config import PostFilterType, ScrapeConfig
 from services.content_service import ContentService, ContentsAffiliation
 from services.user_service import UserService
 from utils.logger import generate_scrape_logger_msg
@@ -41,14 +42,8 @@ class PostService:
             tasks.append(self.fetch_post(contact, start_pn, end_pn))
             start_pn = end_pn + 1
 
-        latest_pid = 0
-        if is_update:
-            latest_post = self.post_dao.query_latest_post()
-            if latest_post is not None:
-                latest_pid = latest_post.id
-
         for _ in range(consumers_num):
-            tasks.append(self.save_post(contact, latest_pid))
+            tasks.append(self.save_post(contact, is_update))
 
         await asyncio.gather(*tasks)
 
@@ -74,7 +69,7 @@ class PostService:
             for _ in range(contact.consumers_num):
                 await contact.tasks_queue.put(None)
 
-    async def save_post(self, contact: ProducerConsumerContact, latest_pid: int = 0) -> None:
+    async def save_post(self, contact: ProducerConsumerContact, is_update: bool = False) -> None:
         while True:
             try:
                 posts: Posts = await asyncio.wait_for(
@@ -87,8 +82,11 @@ class PostService:
                 for post in posts.objs:
                     try:
                         # Comment 1
+                        if post.pid <= 0:
+                            continue
+
                         # 已经被保存的帖子
-                        if post.pid <= latest_pid:
+                        if is_update and self.post_dao.query_post_is_exist(post.pid):
                             self.post_dao.update_post_traffic_by_id(
                                 post.pid, post.agree, post.disagree, post.reply_num
                             )
@@ -135,6 +133,12 @@ class PostService:
                             posts.page.current_page,
                             post.reply_num,
                         )
+
+                        # TODO 剪值
+                        #     爬取批次剪开枝叶。 删除 where parent_id = post_id  count()
+
+
+
 
                     except Exception as e:
                         MsgPrinter.print_error(
@@ -210,15 +214,9 @@ class PostService:
         consumer_await_timeout = 8
         contact = ProducerConsumerContact(queue_maxsize, producers_num, consumers_num, consumer_await_timeout)
 
-        latest_sub_pid = 0
-        if is_update:
-            latest_sub_post = self.post_dao.query_latest_sub_post_by_pid(ppid)
-            if latest_sub_post is not None:
-                latest_sub_pid = self.post_dao.query_latest_sub_post_by_pid(ppid).id
-
         await asyncio.gather(
             self.fetch_comments(contact, ppid, floor),
-            *[self.save_comments(contact, ppn, latest_sub_pid) for _ in range(consumers_num)],
+            *[self.save_comments(contact, ppn, is_update) for _ in range(consumers_num)],
         )
 
     async def fetch_comments(self, contact: ProducerConsumerContact, ppid: int, floor: int):
@@ -229,6 +227,7 @@ class PostService:
             comments = await get_comments(self.tid, ppid, floor, pn)
             pn += 1
             if comments is None:
+                print("None NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN None")
                 self.scrape_logger.error(
                     generate_scrape_logger_msg(
                         "请求失败",
@@ -249,7 +248,7 @@ class PostService:
             for _ in range(contact.consumers_num):
                 await contact.tasks_queue.put(None)
 
-    async def save_comments(self, contact: ProducerConsumerContact, ppn: int, latest_sub_pid: int = 0):
+    async def save_comments(self, contact: ProducerConsumerContact, ppn: int, is_update: bool = False):
         while True:
             try:
                 comments: Comments = await asyncio.wait_for(
@@ -261,7 +260,13 @@ class PostService:
 
                 for comment in comments.objs:
                     try:
-                        if comment.pid <= latest_sub_pid:
+                        if (
+                                PostFilterType.AUTHOR_POSTS_WITH_AUTHOR_SUBPOSTS == ScrapeConfig.POST_FILTER_TYPE
+                                or PostFilterType.ALL == ScrapeConfig.POST_FILTER_TYPE
+                        ) and (not comment.is_thread_author):
+                            continue
+
+                        if is_update and self.post_dao.query_post_is_exist(comment.pid):
                             self.post_dao.update_post_traffic_by_id(
                                 comment.pid, comment.agree, comment.disagree, 0
                             )

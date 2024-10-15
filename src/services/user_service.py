@@ -1,5 +1,4 @@
 import asyncio
-import time
 
 from aiotieba.api.get_comments import UserInfo_c
 from aiotieba.api.get_posts import UserInfo_p
@@ -10,11 +9,10 @@ from container.container import Container
 from db.tieba_origin_src_dao import TiebaOriginSrcDao
 from db.user_dao import UserDao
 from pojo.content_frag import ContentFragType
-from pojo.enums import DownloadUserAvatarModeType
 from pojo.producer_consumer_contact import ProducerConsumerContact
 from pojo.tieba_origin_src_entity import TiebaOriginSrcEntity
-from pojo.user_entity import UserEntity
-from pojo.user_status import UserStatus
+from pojo.user_entity import UserEntity, UserStatus
+from scrape_config import DownloadUserAvatarMode
 from scrape_config import ScrapeConfig
 from utils.fs import download_file
 from utils.logger import generate_scrape_logger_msg
@@ -24,6 +22,7 @@ from utils.msg_printer import MsgPrinter
 class UserService:
     def __init__(self):
         self.tid = Container.get_tid()
+        self.scrape_timestamp = Container.get_scrape_timestamp()
         self.scrape_data_path_builder = Container.get_scrape_data_path_builder()
         self.scrape_logger = Container.get_scrape_logger()
         self.user_dao = UserDao()
@@ -130,32 +129,29 @@ class UserService:
                         "", "FetchUserInfo", ["id", user_entity.id, "portrait", user_entity.portrait]
                     )
                 )
-                await contact.tasks_queue.put(user_entity)
-                continue
+            else:
+                user_entity.portrait = user_info.portrait
+                user_entity.username = user_entity.username if user_info.user_name == "-" else user_info.user_name
+                user_entity.username = None if user_entity.username == "" else user_entity.username
+                user_entity.nickname = user_info.nick_name_new or user_info.nick_name_old or ""
+                user_entity.tieba_uid = user_info.tieba_uid or None
 
-            # user与其他domain相关联的字段在其他domain保存时就已经保存到了数据库里
-            user_entity.portrait = user_info.portrait
-            user_entity.username = user_entity.username if user_info.user_name == "-" else user_info.user_name
-            user_entity.username = None if user_entity.username == "" else user_entity.username
-            user_entity.nickname = user_info.nick_name_new or user_info.nick_name_old or ""
-            user_entity.tieba_uid = user_info.tieba_uid or None
+                user_entity.glevel = user_info.glevel
+                user_entity.gender = user_info.gender
+                user_entity.age = user_info.age
+                user_entity.post_num = user_info.post_num
+                user_entity.agree_num = user_info.agree_num
+                user_entity.fan_num = user_info.fan_num
+                user_entity.follow_num = user_info.follow_num
+                user_entity.forum_num = user_info.forum_num
+                user_entity.sign = user_info.sign
+                user_entity.ip = user_info.ip
 
-            user_entity.glevel = user_info.glevel
-            user_entity.gender = user_info.gender
-            user_entity.age = user_info.age
-            user_entity.post_num = user_info.post_num
-            user_entity.agree_num = user_info.agree_num
-            user_entity.fan_num = user_info.fan_num
-            user_entity.follow_num = user_info.follow_num
-            user_entity.forum_num = user_info.forum_num
-            user_entity.sign = user_info.sign
-            user_entity.ip = user_info.ip
-
-            user_entity.is_vip = user_info.is_vip
-            user_entity.is_god = user_info.is_god
+                user_entity.is_vip = user_info.is_vip
+                user_entity.is_god = user_info.is_god
 
             user_entity.completed = 1
-            user_entity.scrape_time = int(time.time())
+            user_entity.scrape_time = self.scrape_timestamp
 
             await contact.tasks_queue.put(user_entity)
 
@@ -177,7 +173,7 @@ class UserService:
                 if user_entity is None:
                     return
 
-                if ScrapeConfig.DOWNLOAD_USER_AVATAR_MODE != DownloadUserAvatarModeType.NONE:
+                if ScrapeConfig.DOWNLOAD_USER_AVATAR_MODE != DownloadUserAvatarMode.NONE:
                     user_entity.avatar = await self._save_user_avatar(user_entity.id, user_entity.portrait)
                 try:
                     self.user_dao.update(user_entity)

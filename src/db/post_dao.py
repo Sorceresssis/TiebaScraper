@@ -11,6 +11,12 @@ class PostDao:
             return None
         return PostEntity(*tuple_row)
 
+    def query_post_is_exist(self, pid: int) -> bool:
+        sql = "SELECT 1 FROM post WHERE id = ?;"
+        cursor = self.db.execute(sql, (pid,))
+        result = cursor.fetchone()
+        return result is not None
+
     def query_latest_post(self) -> PostEntity | None:
         sql = "SELECT id, contents, floor, user_id, agree, disagree, create_time, is_thread_author, sign, reply_num, parent_id, reply_to_id FROM post WHERE parent_id = 0 ORDER BY id DESC LIMIT 1;"
         cursor = self.db.execute(sql)
