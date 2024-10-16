@@ -38,6 +38,15 @@ class ContentDB(sqlite3.Connection):
                 v TEXT NOT NULL
             );
 
+            DROP TABLE IF EXISTS scrape_batch;
+            CREATE TABLE scrape_batch
+            (
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                scraper_version TEXT    NOT NULL,
+                scrape_config   TEXT    NOT NULL,
+                scrape_time     INTEGER NOT NULL
+            );
+
             DROP TABLE IF EXISTS post;
             CREATE TABLE post
             (
@@ -52,7 +61,8 @@ class ContentDB(sqlite3.Connection):
                 sign             TEXT    DEFAULT '' NOT NULL,
                 reply_num        INTEGER DEFAULT 0  NOT NULL,
                 parent_id        INTEGER DEFAULT 0  NOT NULL,
-                reply_to_id      INTEGER DEFAULT 0  NOT NULL
+                reply_to_id      INTEGER DEFAULT 0  NOT NULL,
+                scrape_batch_id  INTEGER DEFAULT 0  NOT NULL
             );
             CREATE INDEX 'idx_post(floor)' ON post (floor);
             CREATE INDEX 'idx_post(user_id)' ON post (user_id);
@@ -60,6 +70,7 @@ class ContentDB(sqlite3.Connection):
             CREATE INDEX 'idx_post(create_time)' ON post (create_time);
             CREATE INDEX 'idx_post(is_thread_author)' ON post (is_thread_author);
             CREATE INDEX 'idx_post(parent_id)' ON post (parent_id);
+            CREATE INDEX 'idx_post(scrape_batch_id)' ON post(scrape_batch_id);
 
             DROP TABLE IF EXISTS 'user';
             CREATE TABLE user
@@ -195,8 +206,20 @@ class ContentDB(sqlite3.Connection):
                 self.__insert_db_info_data()
                 yield "执行数据库升级 v1.2.1 -> v1.3.0 "
             if "1.3.0" == scraper_version:
-                # sql_alter__v_1_3_1 = """"""
-                # self.executescript(sql_alter__v_1_3_1)
+                sql_alter__v_1_3_1 = """
+                    DROP TABLE IF EXISTS scrape_batch;
+                    CREATE TABLE scrape_batch
+                    (
+                        id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                        scraper_version TEXT    NOT NULL,
+                        scrape_config   TEXT    NOT NULL,
+                        scrape_time     INTEGER NOT NULL
+                    );
+                    
+                    ALTER TABLE post ADD COLUMN scrape_batch_id INTEGER DEFAULT 0 NOT NULL;
+                    CREATE INDEX 'idx_post(scrape_batch_id)' ON post(scrape_batch_id);
+                """
+                self.executescript(sql_alter__v_1_3_1)
                 yield "执行数据库升级 v1.3.0 -> v1.3.1 "
             if "1.3.1" == scraper_version:
                 yield "最新版本，无需更新"

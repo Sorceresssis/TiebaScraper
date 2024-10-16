@@ -1,7 +1,10 @@
 import os
+import re
 from typing import Any
+from typing import List
 
 import aiofiles
+import aiofiles.os
 import aiohttp
 import orjson
 
@@ -53,6 +56,33 @@ async def download_file(
             attempt += 1
 
     raise Exception(f"Failed to download {url} after {retries} attempts")
+
+
+async def remove_files_by_regex(directory: str, pattern: str) -> List[str]:
+    """
+    删除指定目录下符合给定正则表达式的文件，并返回删除的文件名列表。
+
+    :param directory: 要搜索的目录路径
+    :param pattern: 正则表达式字符串，用于匹配文件名
+    :return: 删除的文件名列表
+    """
+    deleted_files = []
+    regex = re.compile(pattern)
+
+    # 遍历目录下的文件
+    for root, _, files in os.walk(directory):
+        for file in files:
+            # 匹配文件名
+            if regex.match(file):
+                file_path = os.path.join(root, file)
+                try:
+                    # 异步删除文件
+                    await aiofiles.os.remove(file_path)
+                    deleted_files.append(file)
+                except Exception as e:
+                    print(f"删除文件 {file_path} 失败: {e}")
+
+    return deleted_files
 
 
 def json_dumps(data: Any):

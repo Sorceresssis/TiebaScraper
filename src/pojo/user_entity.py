@@ -33,5 +33,5 @@ class UserEntity:
     is_bawu: bool = False
     status: int = UserStatus.ACTIVE
 
-    completed: int = 0  # 0 | 1
-    scrape_time: int = 0
+    completed: int = 0  # (v1.3.0) 新增: 0 | 1
+    scrape_time: int = 0  # (v1.3.0) 新增

@@ -134,10 +134,9 @@ class PostService:
                             post.reply_num,
                         )
 
-                        # TODO 剪值
-                        #     爬取批次剪开枝叶。 删除 where parent_id = post_id  count()
-
-
+                        if (ScrapeConfig.POST_FILTER_TYPE == PostFilterType.AUTHOR_AND_REPLIED_POSTS_WITH_SUBPOSTS or
+                                ScrapeConfig.POST_FILTER_TYPE == PostFilterType.AUTHOR_AND_REPLIED_POSTS_WITH_AUTHOR_SUBPOSTS):
+                            pass
 
 
                     except Exception as e:

@@ -47,18 +47,23 @@ async def scrape_update(path: str):
     with open(scrape_info_path, "r") as file:
         scrape_info: ScrapeInfoDict = orjson.loads(file.read())
 
-    scrape_record: ScrapeRecordDict = {
+    new_scrape_record: ScrapeRecordDict = {
         "scrape_time": Container.get_scrape_timestamp(),
-        "scrape_config": ScrapeConfig.to_dict()
+        "scrape_config": ScrapeConfig.to_dict(),
     }
     if "scrape_records" in scrape_info:
-        # TODO 读取上一次爬取的配置， 如果更新配置与之前的配置不一样。 发出警告。
-        find_diff_config(a['scrape_config'], scrape_record["scrape_config"])
-        # 当前爬取配置与上一次爬取配置，存在差异，是否继续。
+        scrape_records = scrape_info["scrape_records"]
+        if not (
+            len(scrape_records) > 0
+            and (
+                await confirm_config(scrape_records[-1]["scrape_config"], new_scrape_record["scrape_config"])
+            )
+        ):
+            return
 
-        scrape_info["scrape_records"].append(scrape_record)
+        scrape_info["scrape_records"].append(new_scrape_record)
     else:
-        scrape_info["scrape_records"] = [scrape_record]
+        scrape_info["scrape_records"] = [new_scrape_record]
 
     scrape_info["update_time"] = Container.get_scrape_timestamp()
     scrape_info["scraper_version"] = scraper_config.SCRAPER_VERSION
@@ -130,9 +135,32 @@ async def update_thread(tid: int, *, is_share_origin=False):
     scrape_logger.info(generate_scrape_logger_msg("帖子更新完成", "StepMark", ["tid", tid]))
 
 
-async def find_diff_config(old_config: dict, new_config: dict):
-    if old_config[ScrapeConfigKeys.POST_FILTER_TYPE] != new_config[ScrapeConfigKeys.POST_FILTER_TYPE]:
-        return False
+# 确认配置
+async def confirm_config(old_config: dict, new_config: dict) -> bool:
+    confirm_item = [
+        (
+            ScrapeConfigKeys.POST_FILTER_TYPE,
+            "帖子过滤",
+        ),
+        (
+            ScrapeConfigKeys.DOWNLOAD_USER_AVATAR_MODE,
+            "用户头像下载模式",
+        ),
+    ]
 
-    questionary.confirm(f"发现配置差异，是否继续？", style=WarningStyle)
-    return True
+    is_diff = False
+    diff_msg = ""
+
+    for item in confirm_item:
+        if old_config[item[0]] != new_config[item[0]]:
+            is_diff = True
+
+            diff_msg += f"{item[1]}: {old_config[item[0]]} -> {new_config[item[0]]}\n"
+
+    if is_diff:
+        print(diff_msg)
+        return await questionary.confirm(
+            "本次爬取的配置与上一次爬取的配置存在差异，是否继续？", style=WarningStyle
+        ).ask_async()
+    else:
+        return True
