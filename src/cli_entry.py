@@ -11,7 +11,7 @@ from modules.scrape_update_module import scrape_update
 from scrape_config import DownloadUserAvatarMode, ScrapeConfig, ScrapeConfigKeys, PostFilterType
 from tieba_auth import TiebaAuth
 from utils.cli_questionary import InfoStyle
-from utils.common import counter_gen
+from utils.common import counter_gen, json_dumps
 from utils.msg_printer import PrintColor
 
 counter = counter_gen()
@@ -30,12 +30,7 @@ def read_tieba_auth() -> None:
         BDUSS = questionary.text("未配置BDUSS, 请输入: ").ask()
         TiebaAuth.BDUSS = BDUSS
         with open(tieba_auth_file_path, "w", encoding="utf-8") as f:
-            f.write(
-                orjson.dumps(
-                    TiebaAuth(),
-                    option=orjson.OPT_INDENT_2,
-                ).decode("utf-8")
-            )
+            f.write(json_dumps(TiebaAuth.to_dict()))
 
 
 SCRAPE_CONFIG_FILENAME = "scrape_config.json"
@@ -65,7 +60,7 @@ def read_scrape_config() -> None:
 
 def write_scrape_config() -> None:
     with open(scrape_config_file_path, "w", encoding="utf-8") as f:
-        f.write(orjson.dumps(ScrapeConfig.to_dict(), option=orjson.OPT_INDENT_2).decode("utf-8"))
+        f.write(json_dumps(ScrapeConfig.to_dict()))
 
 
 def set_scrape_config() -> None:
