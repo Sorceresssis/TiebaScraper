@@ -4,7 +4,6 @@ import re
 from typing import List
 
 import aiofiles
-import orjson
 from aiotieba.api.get_posts._classdef import Thread_p, ShareThread_pt
 
 from api.aiotieba_client import get_forum, get_forum_detail
@@ -12,8 +11,9 @@ from container.container import Container
 from db.tieba_origin_src_dao import TiebaOriginSrcDao
 from pojo.content_frag import ContentFragType
 from pojo.forum_info import ForumInfo
-from pojo.thread_info import ThreadInfo, VoteInfo, VoteOption
+from pojo.thread_info import ThreadInfo, ThreadStatus, VoteInfo, VoteOption
 from pojo.tieba_origin_src_entity import TiebaOriginSrcEntity
+from utils.common import json_dumps
 from utils.fs import download_file
 from utils.logger import generate_scrape_logger_msg
 from utils.msg_printer import MsgPrinter
@@ -60,9 +60,9 @@ class ThreadService:
             )
 
             async with aiofiles.open(
-                self.scrape_data_path_builder.get_thread_info_path(self.tid), "w", encoding="utf-8"
+                    self.scrape_data_path_builder.get_thread_info_path(self.tid), "w", encoding="utf-8"
             ) as file:
-                await file.write(orjson.dumps(thread_info).decode("utf-8"))
+                await file.write(json_dumps(thread_info))
             MsgPrinter.print_success(
                 "主题帖信息保存成功", "SaveThreadInfo", ["tid", thread.tid, "title", thread.title]
             )
@@ -100,12 +100,13 @@ class ThreadService:
                 0,
                 0,
                 0,
+                ThreadStatus.DELETED,
             )
 
             async with aiofiles.open(
-                self.scrape_data_path_builder.get_thread_info_path(self.tid), "w", encoding="utf-8"
+                    self.scrape_data_path_builder.get_thread_info_path(self.tid), "w", encoding="utf-8"
             ) as file:
-                await file.write(orjson.dumps(thread_info).decode("utf-8"))
+                await file.write(json_dumps(thread_info))
 
             MsgPrinter.print_success(
                 "主题帖信息保存成功",
@@ -200,9 +201,9 @@ class ThreadService:
             )
 
             async with aiofiles.open(
-                self.scrape_data_path_builder.get_forum_info_path(self.tid), "w", encoding="utf-8"
+                    self.scrape_data_path_builder.get_forum_info_path(self.tid), "w", encoding="utf-8"
             ) as file:
-                await file.write(orjson.dumps(forum_info).decode("utf-8"))
+                await file.write(json_dumps(forum_info))
 
             # 把源链接写入数据库
             self.tieba_origin_src_dao.insert(

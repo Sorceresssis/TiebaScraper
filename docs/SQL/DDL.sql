@@ -9,6 +9,16 @@ INSERT INTO db_info
 VALUES ('scraper_version', ''),
        ('tid', '');
 
+-- (v1.3.1) 新增
+DROP TABLE IF EXISTS scrape_batch;
+CREATE TABLE scrape_batch
+(
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    scraper_version TEXT    NOT NULL,
+    scrape_config   TEXT    NOT NULL,
+    scrape_time     INTEGER NOT NULL
+);
+
 
 DROP TABLE IF EXISTS post;
 CREATE TABLE post
@@ -24,7 +34,9 @@ CREATE TABLE post
     sign             TEXT    DEFAULT '' NOT NULL, -- 小尾巴，post独有,
     reply_num        INTEGER DEFAULT 0  NOT NULL, -- 楼独有，冗余字段，不需要join。
     parent_id        INTEGER DEFAULT 0  NOT NULL, -- 楼中楼独有, 区分普通楼和楼中的唯一标识 where parent_id == 0
-    reply_to_id      INTEGER DEFAULT 0  NOT NULL  -- 楼中楼独有，不是所有的楼中楼都有reply_to_id。要回复的user_id.不是Post_id。b站是保存的Post_id
+    reply_to_id      INTEGER DEFAULT 0  NOT NULL, -- 楼中楼独有，不是所有的楼中楼都有reply_to_id。要回复的user_id.不是Post_id。b站是保存的Post_id
+
+    scrape_batch_id  INTEGER DEFAULT 0  NOT NULL  -- (v1.3.1 - 新增) 关联 scrape_batch.id
 );
 CREATE INDEX 'idx_post(floor)' ON post (floor);
 CREATE INDEX 'idx_post(user_id)' ON post (user_id);
@@ -32,7 +44,7 @@ CREATE INDEX 'idx_post(agree)' ON post (agree); -- 根据点赞数排序
 CREATE INDEX 'idx_post(create_time)' ON post (create_time); -- 根据创建时间排序
 CREATE INDEX 'idx_post(is_thread_author)' ON post (is_thread_author); -- 根据楼主和普通用户区分
 CREATE INDEX 'idx_post(parent_id)' ON post (parent_id);
-
+CREATE INDEX 'idx_post(scrape_batch_id)' ON post(scrape_batch_id);-- (v1.3.1)新增
 
 
 DROP TABLE IF EXISTS 'user';

@@ -1,5 +1,6 @@
 import aiotieba as tb
 
+from scrape_config import ScrapeConfig, PostFilterType
 from tieba_auth import TiebaAuth
 from utils.msg_printer import MsgPrinter
 
@@ -36,11 +37,17 @@ async def get_forum_detail(fname_or_fid: str | int, retry=3):
     return None
 
 
-async def get_posts(tid: int, pn=1, retry=3):
+async def get_posts(tid: int, pn=1, retry=4):
     failures = 0
+    only_thread_author = False
+    if PostFilterType.AUTHOR_POSTS_WITH_SUBPOSTS == ScrapeConfig.POST_FILTER_TYPE:
+        only_thread_author = True
+    elif PostFilterType.AUTHOR_POSTS_WITH_AUTHOR_SUBPOSTS == ScrapeConfig.POST_FILTER_TYPE:
+        only_thread_author = True
+
     while failures < retry:
         async with tb.Client(TiebaAuth.BDUSS) as client:
-            posts = await client.get_posts(tid, pn, with_comments=True)
+            posts = await client.get_posts(tid, pn, with_comments=True, only_thread_author=only_thread_author)
             if posts and posts.thread.tid != 0:
                 return posts
             else:
@@ -52,7 +59,7 @@ async def get_posts(tid: int, pn=1, retry=3):
     return None
 
 
-async def get_comments(tid: int, pid: int, floor: int, pn=1, retry=3):
+async def get_comments(tid: int, pid: int, floor: int, pn=1, retry=4):
     failures = 0
     while failures < retry:
         async with tb.Client(TiebaAuth.BDUSS) as client:

@@ -140,3 +140,14 @@ class UserDao:
                 entity.id,
             ),
         )
+
+    def delete_user_without_post(self) -> int:
+        sql = """
+            DELETE FROM user
+            WHERE id IN (
+                SELECT u.id
+                FROM user u LEFT JOIN post p ON u.id = p.user_id
+                WHERE p.id IS NULL
+            );
+        """
+        return self.db.execute(sql).rowcount

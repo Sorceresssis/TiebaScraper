@@ -68,6 +68,9 @@ class ScrapeDataPathBuilder:
         os.makedirs(avatar_dir, exist_ok=True)
         return avatar_dir
 
+    def get_post_assets_dir(self, tid: int) -> str:
+        return path.join(self.item_dir, "threads", f"{tid}", "post_assets")
+
     def get_post_image_dir(self, tid: int):
         image_dir = path.join(self.item_dir, "threads", f"{tid}", "post_assets", "images")
         os.makedirs(image_dir, exist_ok=True)
@@ -116,5 +119,9 @@ class ScrapeDataPathBuilder:
         return f"p_{pid}_{idx}_{get_timestamp()}"
 
     @staticmethod
-    def get_post_voice_filename(voice_hash: str):
-        return f"p_{voice_hash}"
+    def get_post_voice_filename(pid: int, idx: int, voice_hash: str):
+        return f"p_{pid}_{idx}_{voice_hash}"
+
+    @staticmethod
+    def get_post_assets_filename_pattern(pid: int):
+        return rf".*p_{pid}_.*"

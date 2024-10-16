@@ -11,9 +11,9 @@
 1. 有时第一次运行会出现连接错误，多试几次即可。
 2. 已经注销的用户保存的数据会有缺失。
 
-## 使用可执行程序
+## 普通用户使用教程
 
-这里介绍一下用可执行程序进行数据的抓取。
+可执行程序的使用方法。
 
 ### 1. 开始
 
@@ -21,7 +21,7 @@
 
 你可以通过方向键来选择你想要进行的操作
 
-![1724537635702](./docs/assets/README/images/1724537635702.png)
+![1729109818485](./docs/assets/README/images/1729109818485.png)
 
 ### 2. 获取 BDUSS
 
@@ -73,9 +73,11 @@ tid 类似于帖子的身份证。你可以从帖子的 url 中获取到它
 
 [爬取配置](./docs/scrape_config.md)
 
-[贴吧数据 Note](./docs/tieba_data_notes.md)
+[贴吧数据说明](./docs/tieba_data_notes.md)
 
 [贴吧官方错误说明](./docs/tieba_error_desc.md)
+
+[程序说明](./docs/explain.md)
 
 [数据库 DDL](./docs/SQL/DDL.sql)
 
@@ -106,9 +108,8 @@ tid 类似于帖子的身份证。你可以从帖子的 url 中获取到它
         │   ├───user_avatar # 用户的头像
         │   ├───content.db # 帖子内容
         │   ├───forum.json # 吧信息
-        │   ├───scrape.log  # 抓取的日志
+        │   ├───scrape.${timestamp}.log  # 抓取的日志
         │   ├───thread.json # 帖子信息
-        │   └───update_${timestamp}.log # 更新日志
         └───${share_origin_tid} # 主贴的转发原帖，如果存在的话
             ├───forum_avatar
             ├───post_assets
@@ -118,9 +119,8 @@ tid 类似于帖子的身份证。你可以从帖子的 url 中获取到它
             ├───user_avatar
             ├───content.db
             ├───forum.json
-            ├───scrape.log
-            ├───thread.json
-            └───update_${timestamp}.log
+            ├───scrape.${timestamp}.log
+            └───thread.json
 
 ```
 

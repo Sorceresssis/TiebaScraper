@@ -1,4 +1,5 @@
 import os
+import re
 
 import aiofiles
 import aiohttp
@@ -51,3 +52,20 @@ async def download_file(
             attempt += 1
 
     raise Exception(f"Failed to download {url} after {retries} attempts")
+
+
+async def delete_matching_files(directory: str, pattern: str):
+    deleted_files = []  # 用于存储被删除的文件名
+    regex = re.compile(pattern)
+
+    # 遍历目录及其所有子目录
+    for dir_path, _, filenames in os.walk(directory):
+        for filename in filenames:
+            if regex.search(filename):
+                file_path = os.path.join(dir_path, filename)
+                async with aiofiles.open(file_path, "rb") as f:
+                    await f.close()
+                os.remove(file_path)  # 删除文件
+                deleted_files.append(filename)  # 记录被删除的文件路径
+
+    return deleted_files  # 返回被删除的文件路径列表

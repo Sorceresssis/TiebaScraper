@@ -1,13 +1,12 @@
-from pojo.enums import DownloadUserAvatarModeType
-from scrape_config import ScrapeConfig
+from scrape_config import ScrapeConfig, DownloadUserAvatarMode
 
 
 def get_user_avatar_base_url() -> str:
-    if DownloadUserAvatarModeType.LOW == ScrapeConfig.DOWNLOAD_USER_AVATAR_MODE:
+    if DownloadUserAvatarMode.LOW == ScrapeConfig.DOWNLOAD_USER_AVATAR_MODE:
         return "http://tb.himg.baidu.com/sys/portrait/item/"
-    elif DownloadUserAvatarModeType.HIGH == ScrapeConfig.DOWNLOAD_USER_AVATAR_MODE:
+    elif DownloadUserAvatarMode.HIGH == ScrapeConfig.DOWNLOAD_USER_AVATAR_MODE:
         return "https://himg.bdimg.com/sys/portraith/item/"
-    elif DownloadUserAvatarModeType.NONE == ScrapeConfig.DOWNLOAD_USER_AVATAR_MODE:
+    elif DownloadUserAvatarMode.NONE == ScrapeConfig.DOWNLOAD_USER_AVATAR_MODE:
         return ""
     else:
         raise Exception("未知的头像下载类型")

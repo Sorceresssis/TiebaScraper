@@ -1,5 +1,12 @@
 from dataclasses import dataclass, field
 
+from typing import Optional
+
+
+class ThreadStatus:
+    NORMAL = 0
+    DELETED = 1
+
 
 @dataclass
 class VoteOption:
@@ -35,3 +42,5 @@ class ThreadInfo:
     agree: int
     disagree: int
     create_time: int
+
+    status: Optional[int] = field(default=ThreadStatus.NORMAL)  # (v1.3.1)新增. 0 正常 1 可能已被屏蔽或删除
