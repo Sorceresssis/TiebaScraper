@@ -12,8 +12,7 @@ from scrape_config import ScrapeConfig
 from services.post_service import PostService
 from services.thread_service import ThreadService
 from services.user_service import UserService
-from utils.common import counter_gen
-from utils.fs import json_dumps
+from utils.common import counter_gen, json_dumps
 from utils.logger import generate_scrape_logger_msg
 from utils.msg_printer import MsgPrinter
 
@@ -132,8 +131,6 @@ async def scrape_thread(tid: int, *, is_share_origin: bool = False, share_origin
     MsgPrinter.print_step_mark("正在集中完善用户数据", ["tid", tid])
     scrape_logger.info(generate_scrape_logger_msg("正在集中完善用户数据", "StepMark", ["tid", tid]))
     await user_service.complete_user_info()
-
-    # TODO 开始集中保存 静态文件 。 
 
     final_treatment()
     MsgPrinter.print_step_mark("帖子爬取完成", ["tid", tid])

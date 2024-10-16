@@ -15,7 +15,7 @@ from services.post_service import PostService
 from services.thread_service import ThreadService
 from services.user_service import UserService
 from utils.cli_questionary import WarningStyle
-from utils.fs import json_dumps
+from utils.common import json_dumps
 from utils.logger import generate_scrape_logger_msg
 from utils.msg_printer import MsgPrinter
 
@@ -54,10 +54,10 @@ async def scrape_update(path: str):
     if "scrape_records" in scrape_info:
         scrape_records = scrape_info["scrape_records"]
         if not (
-            len(scrape_records) > 0
-            and (
-                await confirm_config(scrape_records[-1]["scrape_config"], new_scrape_record["scrape_config"])
-            )
+                len(scrape_records) > 0
+                and (
+                        await confirm_config(scrape_records[-1]["scrape_config"], new_scrape_record["scrape_config"])
+                )
         ):
             return
 

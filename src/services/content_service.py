@@ -341,7 +341,7 @@ class ContentService:
                 await download_file(
                     voice_url,
                     self.post_voice_dir,
-                    self.scrape_data_path_builder.get_post_voice_filename(frag.md5),
+                    self.scrape_data_path_builder.get_post_voice_filename(affiliation.pid, idx, frag.md5),
                     "amr",
                 )
             )[0]

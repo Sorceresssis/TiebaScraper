@@ -116,12 +116,10 @@ def set_scrape_config() -> None:
                 ),
                 questionary.Choice(
                     f"{next(counter)}. 'thread_author 的 post 和 thread_author 回复过的 post' + 'post 下 thread_author 的 subpost'({PostFilterType.AUTHOR_AND_REPLIED_POSTS_WITH_AUTHOR_SUBPOSTS})",
-                    PostFilterType.AUTHOR_AND_REPLIED_POSTS_WITH_AUTHOR_SUBPOSTS
-                )
+                    PostFilterType.AUTHOR_AND_REPLIED_POSTS_WITH_AUTHOR_SUBPOSTS,
+                ),
             ]
-            post_filter_type = questionary.select(
-                "选择帖子过滤模式", choices=post_filter_type_choices
-            ).ask()
+            post_filter_type = questionary.select("选择帖子过滤模式", choices=post_filter_type_choices).ask()
             ScrapeConfig.POST_FILTER_TYPE = post_filter_type
             write_scrape_config()
         elif ScrapeConfigKeys.DOWNLOAD_USER_AVATAR_MODE == scrape_config_key:

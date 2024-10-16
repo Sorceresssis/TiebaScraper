@@ -1,12 +1,8 @@
 import os
 import re
-from typing import Any
-from typing import List
 
 import aiofiles
-import aiofiles.os
 import aiohttp
-import orjson
 
 
 async def download_file(
@@ -58,33 +54,18 @@ async def download_file(
     raise Exception(f"Failed to download {url} after {retries} attempts")
 
 
-async def remove_files_by_regex(directory: str, pattern: str) -> List[str]:
-    """
-    删除指定目录下符合给定正则表达式的文件，并返回删除的文件名列表。
-
-    :param directory: 要搜索的目录路径
-    :param pattern: 正则表达式字符串，用于匹配文件名
-    :return: 删除的文件名列表
-    """
-    deleted_files = []
+async def delete_matching_files(directory: str, pattern: str):
+    deleted_files = []  # 用于存储被删除的文件名
     regex = re.compile(pattern)
 
-    # 遍历目录下的文件
-    for root, _, files in os.walk(directory):
-        for file in files:
-            # 匹配文件名
-            if regex.match(file):
-                file_path = os.path.join(root, file)
-                try:
-                    # 异步删除文件
-                    await aiofiles.os.remove(file_path)
-                    deleted_files.append(file)
-                except Exception as e:
-                    print(f"删除文件 {file_path} 失败: {e}")
+    # 遍历目录及其所有子目录
+    for dir_path, _, filenames in os.walk(directory):
+        for filename in filenames:
+            if regex.search(filename):
+                file_path = os.path.join(dir_path, filename)
+                async with aiofiles.open(file_path, "rb") as f:
+                    await f.close()
+                os.remove(file_path)  # 删除文件
+                deleted_files.append(filename)  # 记录被删除的文件路径
 
-    return deleted_files
-
-
-def json_dumps(data: Any):
-    return orjson.dumps(data, option=orjson.OPT_INDENT_2 | orjson.OPT_SORT_KEYS | orjson.OPT_NON_STR_KEYS).decode(
-        "utf-8")
+    return deleted_files  # 返回被删除的文件路径列表

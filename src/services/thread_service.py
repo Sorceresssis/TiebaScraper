@@ -13,8 +13,8 @@ from pojo.content_frag import ContentFragType
 from pojo.forum_info import ForumInfo
 from pojo.thread_info import ThreadInfo, ThreadStatus, VoteInfo, VoteOption
 from pojo.tieba_origin_src_entity import TiebaOriginSrcEntity
+from utils.common import json_dumps
 from utils.fs import download_file
-from utils.fs import json_dumps
 from utils.logger import generate_scrape_logger_msg
 from utils.msg_printer import MsgPrinter
 
