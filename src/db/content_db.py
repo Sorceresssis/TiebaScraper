@@ -211,7 +211,7 @@ class ContentDB(sqlite3.Connection):
             self.__insert_db_info_data()
 
         #  v1.3.0 -> v1.3.1
-        if 2 >= scraper_version_anchor:
+        if 2 > scraper_version_anchor:
             sql_alter__v_1_3_1 = """
                     DROP TABLE IF EXISTS scrape_batch;
                     CREATE TABLE scrape_batch

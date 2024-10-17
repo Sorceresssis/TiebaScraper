@@ -51,13 +51,10 @@ async def scrape_update(path: str):
         "scrape_time": Container.get_scrape_timestamp(),
         "scrape_config": ScrapeConfig.to_dict(),
     }
-    if "scrape_records" in scrape_info:
+    if "scrape_records" in scrape_info and len(scrape_info["scrape_records"]) > 0:
         scrape_records = scrape_info["scrape_records"]
         if not (
-                len(scrape_records) > 0
-                and (
-                        await confirm_config(scrape_records[-1]["scrape_config"], new_scrape_record["scrape_config"])
-                )
+            await confirm_config(scrape_records[-1]["scrape_config"], new_scrape_record["scrape_config"])
         ):
             return
 
