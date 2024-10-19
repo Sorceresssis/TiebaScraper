@@ -47,13 +47,13 @@ async def get_custom_emoticon_src(
                 f"https://n0099.net/tbm/v1/client_tester.php?type=replies&tid={tid}&pn={pn}&client_version=12.62.1.0"
         ) as response:
             html = await response.text()
-            resData: N0099TbmV1Posts = orjson.loads(html)
+            res_data: N0099TbmV1Posts = orjson.loads(html)
 
-            if "page" not in resData:
+            if "page" not in res_data:
                 raise Exception("page not in resData")
 
             # 找的post
-            for post in resData["post_list"]:
+            for post in res_data["post_list"]:
                 if not (post["id"] == pid and post["floor"] == floor):
                     continue
 

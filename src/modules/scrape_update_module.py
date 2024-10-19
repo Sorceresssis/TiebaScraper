@@ -44,7 +44,7 @@ async def scrape_update(path: str):
         )
         return
 
-    with open(scrape_info_path, "r") as file:
+    with open(scrape_info_path, "r", encoding="utf-8") as file:
         scrape_info: ScrapeInfoDict = orjson.loads(file.read())
 
     new_scrape_record: ScrapeRecordDict = {
@@ -54,7 +54,7 @@ async def scrape_update(path: str):
     if "scrape_records" in scrape_info and len(scrape_info["scrape_records"]) > 0:
         scrape_records = scrape_info["scrape_records"]
         if not (
-            await confirm_config(scrape_records[-1]["scrape_config"], new_scrape_record["scrape_config"])
+                await confirm_config(scrape_records[-1]["scrape_config"], new_scrape_record["scrape_config"])
         ):
             return
 
@@ -64,14 +64,14 @@ async def scrape_update(path: str):
 
     scrape_info["update_time"] = Container.get_scrape_timestamp()
     scrape_info["scraper_version"] = scraper_config.SCRAPER_VERSION
-    with open(scrape_info_path, "w") as file:
+    with open(scrape_info_path, "w", encoding="utf-8") as file:
         file.write(json_dumps(scrape_info))
 
     # ANCHOR main_thread
     main_thread_id = scrape_info["main_thread"]
     await update_thread(main_thread_id)
 
-    with open(scrape_data_path_builder.get_thread_info_path(main_thread_id), "r") as file:
+    with open(scrape_data_path_builder.get_thread_info_path(main_thread_id), "r", encoding="utf-8") as file:
         main_thread_info_dict = orjson.loads(file.read())
 
     # ANCHOR share_origin
