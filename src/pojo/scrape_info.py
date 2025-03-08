@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import TypedDict, Optional, Dict
 
-from config.scraper_config import SCRAPER_VERSION
+from ..config.scraper_config import SCRAPER_VERSION
 
 
 class ScrapeRecordDict(TypedDict):
@@ -9,24 +9,21 @@ class ScrapeRecordDict(TypedDict):
     scrape_config: Dict
 
 
+# TODO JSON 文件中读取的数据建立新的对象,
+
 @dataclass
 class ScrapeInfo:
-    """
-    This class is used to store information about the scraper.
-
-    Attributes:
-        scraper_version (str): The version of the scraper.
-        main_thread (int): The main thread ID of the scraper.
-    """
-
     def __init__(self, main_thread: int, create_time: int, scrape_record: ScrapeRecordDict) -> None:
         self.main_thread = main_thread
         self.create_time = create_time
         self.update_time = create_time
-        # self.update_times = [] # v1.3.1(删除)
         self.scraper_version = SCRAPER_VERSION
 
         self.scrape_records = [scrape_record]  # v1.3.1(新增)
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(data['name'], data['age'], data['city'])
 
 
 class ScrapeInfoDict(TypedDict):

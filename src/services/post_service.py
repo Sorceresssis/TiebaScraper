@@ -3,22 +3,22 @@ import math
 
 from aiotieba.typing import Posts, Comments, Post
 
-from api.aiotieba_client import get_posts, get_comments
-from config.scraper_config import SCRAPER_VERSION
-from container.container import Container
-from db.post_dao import PostDao
-from db.scrape_batch_dao import ScrapeBatchDao
-from db.tieba_origin_src_dao import TiebaOriginSrcDao
-from db.user_dao import UserDao
-from pojo.post_entity import PostEntity
-from pojo.producer_consumer_contact import ProducerConsumerContact
-from scrape_config import PostFilterType, ScrapeConfig
-from services.content_service import ContentService, ContentsAffiliation
-from services.user_service import UserService
-from utils.common import json_dumps
-from utils.fs import delete_matching_files
-from utils.logger import generate_scrape_logger_msg
-from utils.msg_printer import MsgPrinter
+from ..api.aiotieba_client import get_posts, get_comments
+from ..config.scraper_config import SCRAPER_VERSION
+from ..container.container import Container
+from ..db.post_dao import PostDao
+from ..db.scrape_batch_dao import ScrapeBatchDao
+from ..db.tieba_origin_src_dao import TiebaOriginSrcDao
+from ..db.user_dao import UserDao
+from ..pojo.post_entity import PostEntity
+from ..pojo.producer_consumer_contact import ProducerConsumerContact
+from ..scrape_config import PostFilterType, ScrapeConfig
+from ..services.content_service import ContentService, ContentsAffiliation
+from ..services.user_service import UserService
+from ..utils.common import json_dumps
+from ..utils.fs import delete_matching_files
+from ..utils.logger import generate_scrape_logger_msg
+from ..utils.msg_printer import MsgPrinter
 
 
 class PostService:
@@ -102,7 +102,7 @@ class PostService:
 
                 for post in posts.objs:
                     try:
-                        # Comment 1
+                        # https://github.com/Starry-OvO/aiotieba/issues/210
                         if post.pid <= 0:
                             continue
 
@@ -402,57 +402,3 @@ class PostService:
             except asyncio.TimeoutError:
                 if contact.running_producers == 0:
                     return
-
-
-# Comment 1 : 判断 pid 是否 <= 0 的注释。
-# https://github.com/Starry-OvO/aiotieba/issues/210 已解决
-"""
-之所以要判断pid是否大于0, 是因为封装后的get_posts。请求到的数据可能会出现一个 pid=0, floor=0 的奇怪数据
-
-实例:
-tid = 8695394788
-pn = 1
-rn = 30
-
-直接用 aiotieba 请求的结果是正确的
-    代码:
-        async with aiotieba.Client() as client:
-            posts1 = await client.get_posts(tid, pn, rn=rn, with_comments=False)
-            for post in posts1.objs:
-                print(get_pid_floor(post))
-
-    结果:
-        ...省略...
-        ---------------------------
-        pid: 148955736398
-        floor: 5
-        content[0]: {"text":"兵长"}
-         ---------------------------
-        pid: 148955743416
-        floor: 6
-        content[0]: {"text":"莱纳"}
-        ...省略...
-
-
-调用封装后的 from .et.aiotieba_client import get_posts。请求到的数据会出现 pid=0 的多余数据
-    代码:
-        posts2 = await get_posts(tid, pn, rn)
-        for post in posts1.objs:
-            print(get_pid_floor(post))
-
-    结果:
-        ...省略...
-        ---------------------------
-        pid: 148955736398
-        floor: 5
-        content[0]: {"text":"兵长"}
-        ---------------------------
-        pid: 0
-        floor: 0
-        content[0]: {"text":"我们每个人打从出生开始就是自由的。"}
-        ---------------------------
-        pid: 148955743416
-        floor: 6
-        content[0]: {"text":"莱纳"}
-        ...省略...
-"""

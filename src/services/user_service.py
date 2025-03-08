@@ -3,20 +3,20 @@ import asyncio
 from aiotieba.api.get_comments import UserInfo_c
 from aiotieba.api.get_posts import UserInfo_p
 
-from api.aiotieba_client import get_user_info
-from api.tieba_api import TiebaApi
-from container.container import Container
-from db.tieba_origin_src_dao import TiebaOriginSrcDao
-from db.user_dao import UserDao
-from pojo.content_frag import ContentFragType
-from pojo.producer_consumer_contact import ProducerConsumerContact
-from pojo.tieba_origin_src_entity import TiebaOriginSrcEntity
-from pojo.user_entity import UserEntity, UserStatus
-from scrape_config import DownloadUserAvatarMode
-from scrape_config import ScrapeConfig
-from utils.fs import download_file
-from utils.logger import generate_scrape_logger_msg
-from utils.msg_printer import MsgPrinter
+from ..api.aiotieba_client import get_user_info
+from ..api.tieba_api import TiebaApi
+from ..container.container import Container
+from ..db.tieba_origin_src_dao import TiebaOriginSrcDao
+from ..db.user_dao import UserDao
+from ..pojo.content_frag import ContentFragType
+from ..pojo.producer_consumer_contact import ProducerConsumerContact
+from ..pojo.tieba_origin_src_entity import TiebaOriginSrcEntity
+from ..pojo.user_entity import UserEntity, UserStatus
+from ..scrape_config import DownloadUserAvatarMode
+from ..scrape_config import ScrapeConfig
+from ..utils.fs import download_file
+from ..utils.logger import generate_scrape_logger_msg
+from ..utils.msg_printer import MsgPrinter
 
 
 class UserService:
@@ -131,7 +131,9 @@ class UserService:
                 )
             else:
                 user_entity.portrait = user_info.portrait
-                user_entity.username = user_entity.username if user_info.user_name == "-" else user_info.user_name
+                user_entity.username = (
+                    user_entity.username if user_info.user_name == "-" else user_info.user_name
+                )
                 user_entity.username = None if user_entity.username == "" else user_entity.username
                 user_entity.nickname = user_info.nick_name_new or user_info.nick_name_old or ""
                 user_entity.tieba_uid = user_info.tieba_uid or None

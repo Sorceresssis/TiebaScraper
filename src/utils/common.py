@@ -13,8 +13,12 @@ def counter_gen(start=0, step=1):
 
 
 def json_dumps(data: Any, to_format: bool = True) -> str:
+
+    encoding = "utf-8"
+
     if to_format:
-        return orjson.dumps(data, option=orjson.OPT_INDENT_2 | orjson.OPT_SORT_KEYS | orjson.OPT_NON_STR_KEYS).decode(
-            "utf-8")
+        return orjson.dumps(
+            data, option=orjson.OPT_INDENT_2 | orjson.OPT_SORT_KEYS | orjson.OPT_NON_STR_KEYS
+        ).decode(encoding)
     else:
-        return orjson.dumps(data).decode("utf-8")
+        return orjson.dumps(data).decode(encoding)

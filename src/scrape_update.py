@@ -20,6 +20,11 @@
 # NOTE 2024-10-15
 # 如果两次爬取的配置不一样怎么办?
 
+# TODO
+
+# buss 错误导致的，
+# buss输入检查。
+
 
 import asyncio
 

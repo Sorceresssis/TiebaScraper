@@ -9,6 +9,7 @@ INSERT INTO db_info
 VALUES ('scraper_version', ''),
        ('tid', '');
 
+
 -- (v1.3.1) 新增
 DROP TABLE IF EXISTS scrape_batch;
 CREATE TABLE scrape_batch
@@ -33,8 +34,8 @@ CREATE TABLE post
     is_thread_author BOOLEAN DEFAULT 0  NOT NULL, -- 冗余字段， 区分楼主和普通用户
     sign             TEXT    DEFAULT '' NOT NULL, -- 小尾巴，post独有,
     reply_num        INTEGER DEFAULT 0  NOT NULL, -- 楼独有，冗余字段，不需要join。
-    parent_id        INTEGER DEFAULT 0  NOT NULL, -- 楼中楼独有, 区分普通楼和楼中的唯一标识 where parent_id == 0
-    reply_to_id      INTEGER DEFAULT 0  NOT NULL, -- 楼中楼独有，不是所有的楼中楼都有reply_to_id。要回复的user_id.不是Post_id。b站是保存的Post_id
+    parent_id        INTEGER DEFAULT 0  NOT NULL, -- 楼中楼独有, 区分普通楼和楼中的唯一标识 "where parent_id == 0"
+    reply_to_id      INTEGER DEFAULT 0  NOT NULL, -- 楼中楼独有，不是所有的楼中楼都有reply_to_id。回复给谁,是uid不是 pid。
 
     scrape_batch_id  INTEGER DEFAULT 0  NOT NULL  -- (v1.3.1 - 新增) 关联 scrape_batch.id
 );
@@ -74,13 +75,13 @@ CREATE TABLE user
     is_bawu     BOOLEAN DEFAULT 0  NOT NULL, -- 是吧务 link
 
     status      INTEGER DEFAULT 0  NOT NULL, -- 0 正常，1 注销
-    completed   BOOLEAN DEFAULT 0  NOT NULL, -- (v1.3.0) 是否 completed
-    scrape_time INTEGER DEFAULT 0  NOT NULL  -- (v1.3.0) 最近一次抓取时间。如果是 0 则就读取 scrape_log.json 的 create_time
+
+    completed   BOOLEAN DEFAULT 0  NOT NULL, -- (v1.3.0) 是否 completed, 在更新功能里用于避免重复更新。
+    scrape_time INTEGER DEFAULT 0  NOT NULL  -- (v1.3.0) 抓取时间。如果是 0 则就读取 scrape_log.json 的 create_time
 );
 CREATE UNIQUE INDEX 'uk_user(portrait)' ON 'user'(portrait);
 CREATE UNIQUE INDEX 'uk_user(tieba_uid)' ON 'user'(tieba_uid);
--- (v1.3.0) 新增
-CREATE INDEX 'idx_user(completed)' ON 'user'(completed);
+CREATE INDEX 'idx_user(completed)' ON 'user'(completed);    -- (v1.3.0) 新增
 
 
 -- (v1.3.0) 新增

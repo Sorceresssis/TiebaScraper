@@ -5,19 +5,19 @@ import time
 import orjson
 import questionary
 
-import config.scraper_config as scraper_config
-from api.aiotieba_client import get_posts
-from config.path_config import ScrapeDataPathBuilder
-from container.container import Container
-from pojo.scrape_info import ScrapeInfoDict, ScrapeRecordDict
-from scrape_config import ScrapeConfig, ScrapeConfigKeys
-from services.post_service import PostService
-from services.thread_service import ThreadService
-from services.user_service import UserService
-from utils.cli_questionary import WarningStyle
-from utils.common import json_dumps
-from utils.logger import generate_scrape_logger_msg
-from utils.msg_printer import MsgPrinter
+import src.config.scraper_config as scraper_config
+from ..api.aiotieba_client import get_posts
+from ..config.path_config import ScrapeDataPathBuilder
+from ..container.container import Container
+from ..pojo.scrape_info import ScrapeInfoDict, ScrapeRecordDict
+from ..scrape_config import ScrapeConfig, ScrapeConfigKeys
+from ..services.post_service import PostService
+from ..services.thread_service import ThreadService
+from ..services.user_service import UserService
+from ..utils.cli_questionary import WarningStyle
+from ..utils.common import json_dumps
+from ..utils.logger import generate_scrape_logger_msg
+from ..utils.msg_printer import MsgPrinter
 
 
 async def scrape_update(path: str):

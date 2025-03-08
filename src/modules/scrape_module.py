@@ -4,17 +4,17 @@ import time
 
 from aiotieba.api.get_posts._classdef import ShareThread_pt
 
-from api.aiotieba_client import get_posts
-from config.path_config import ScrapeDataPathBuilder
-from container.container import Container
-from pojo.scrape_info import ScrapeInfo
-from scrape_config import ScrapeConfig
-from services.post_service import PostService
-from services.thread_service import ThreadService
-from services.user_service import UserService
-from utils.common import counter_gen, json_dumps
-from utils.logger import generate_scrape_logger_msg
-from utils.msg_printer import MsgPrinter
+from ..api.aiotieba_client import get_posts
+from ..config.path_config import ScrapeDataPathBuilder
+from ..container.container import Container
+from ..pojo.scrape_info import ScrapeInfo
+from ..scrape_config import ScrapeConfig
+from ..services.post_service import PostService
+from ..services.thread_service import ThreadService
+from ..services.user_service import UserService
+from ..utils.common import counter_gen, json_dumps
+from ..utils.logger import generate_scrape_logger_msg
+from ..utils.msg_printer import MsgPrinter
 
 counter = counter_gen()
 next(counter)
@@ -76,7 +76,9 @@ async def scrape(tid: int):
     MsgPrinter.print_tip(f"帖子数据保存在: {scrape_data_path_builder.get_item_dir()}")
 
 
-async def scrape_thread(tid: int, *, is_share_origin: bool = False, share_origin: ShareThread_pt | None = None):
+async def scrape_thread(
+    tid: int, *, is_share_origin: bool = False, share_origin: ShareThread_pt | None = None
+):
     if tid <= 0:
         return
 

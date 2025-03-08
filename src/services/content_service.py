@@ -12,11 +12,11 @@ from aiotieba.api.get_posts._classdef import (
     FragVoice_p,
 )
 
-from api.n0099_tbm_v1 import get_custom_emoticon_src
-from api.tieba_api import TiebaApi
-from container.container import Container
-from db.tieba_origin_src_dao import TiebaOriginSrcDao
-from pojo.content_frag import (
+from ..api.n0099_tbm_v1 import get_custom_emoticon_src
+from ..api.tieba_api import TiebaApi
+from ..container.container import Container
+from ..db.tieba_origin_src_dao import TiebaOriginSrcDao
+from ..pojo.content_frag import (
     ContentFragType,
     ContentFrag,
     FragText,
@@ -29,11 +29,11 @@ from pojo.content_frag import (
     FragVoice,
     FragScrapeError,
 )
-from pojo.tieba_origin_src_entity import TiebaOriginSrcEntity
-from services.user_service import UserService
-from utils.fs import download_file
-from utils.logger import generate_scrape_logger_msg
-from utils.msg_printer import MsgPrinter
+from ..pojo.tieba_origin_src_entity import TiebaOriginSrcEntity
+from ..services.user_service import UserService
+from ..utils.fs import download_file
+from ..utils.logger import generate_scrape_logger_msg
+from ..utils.msg_printer import MsgPrinter
 
 
 class ContentsAffiliation:

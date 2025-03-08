@@ -166,3 +166,5 @@ cython_debug/
 scraped_data
 tieba_auth.json
 scrape_config.json
+
+test
